@@ -1,0 +1,7 @@
+raid
+data
+venv
+src/__pycache__
+notebook/.ipynb_checkpoints
+docs/build
+.idea/
