@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import re
 import os
-from data_loader import LitsDataset
+from data_loader import TomographyDataset
 
 def get_all_files(dir_path, ext = ""):
     """
@@ -20,8 +20,8 @@ def prepare_lits_dataset(dataset_path, output_path):
     images_path = os.path.join(dataset_path, "imagesTr_gz")
     labels_path = os.path.join(dataset_path, "labelsTr_gz")
 
-    images_files = get_all_files(images_path, ".gz")
-    labels_files = get_all_files(labels_path, ".gz")
+    images_files = get_all_files(images_path, ".gz")[:15]
+    labels_files = get_all_files(labels_path, ".gz")[:15]
 
     for files, dir_name in ((images_files, "images"), (labels_files, "labels")):
         for file in files:
@@ -65,10 +65,5 @@ def load_metadata(csv_path):
     return df
 
 if __name__ == "__main__":
-    #prepare_lits_dataset("C:\\Pg\\lits", "C:\\Pg\\lits_prepared")
+    prepare_lits_dataset("C:\\Pg\\lits", "C:\\Pg\\lits_prepared")
     generate_csv("C:\\Pg\\lits_prepared", "C:\\Pg\\lits_prepared")
-
-    metadata = load_metadata("C:\\Pg\\lits_prepared\\metadata.csv")
-    print(metadata)
-    dataset = LitsDataset("C:\\Pg\\lits_prepared", metadata)
-    image, label = dataset[0]

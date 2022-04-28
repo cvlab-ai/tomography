@@ -7,16 +7,17 @@ from collections import defaultdict
 
 def run_training(
     training_name: str,
-    dataloaders: dict,
+    training_config: TrainingConfig,
+    device: torch.device,
+    data_loaders: dict
 ) -> None:
     """
     Runs the training loop.
+    :param device:
+    :param training_config:
     :param training_name: name of the training
-    :param dataloaders: dictionary of dataloaders
+    :param data_loaders: dictionary of dataloaders
     """
-    training_config = TrainingConfig()
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Training {training_name} on device: {device}")
 
     training_config.net.train()
@@ -42,7 +43,10 @@ def run_training(
             metrics: dict = defaultdict(float)
             epoch_samples = 0
 
-            for inputs, labels in dataloaders[phase]:
+            for batch_index, (inputs, labels) in enumerate(data_loaders[phase]):
+                inputs = inputs.transpose(2, 1)
+                labels = labels.transpose_(2, 1)
+
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 

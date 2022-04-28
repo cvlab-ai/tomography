@@ -8,7 +8,10 @@ import torch.nn as nn
 class TrainingConfig:
     def __init__(self):
         # Batch size for training
-        self.batch_size: int = 8
+        self.batch_size: int = 16
+
+        # Number of folds for cross validation
+        self.k_folds: int = 5
 
         # Number of epochs to train for
         self.epochs: int = 50
@@ -18,14 +21,14 @@ class TrainingConfig:
         self.learning_rate_patience: int = 3
 
         # Input shape
-        self.input_h = 512  # Always 128
-        self.input_w = 512  # Corresponds to the track's length; 512 is around 6 seconds
+        self.input_h = 512
+        self.input_w = 512
         self.channels = 1
-        self.classess = 1
+        self.classes = 1
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # Mode layers definition
         self.net = UNet(
-            n_channels=self.channels, n_classes=self.classess, bilinear=False
+            n_channels=self.channels, n_classes=self.classes, bilinear=False
         )
 
         self.optimizer = optim.Adam(
