@@ -44,17 +44,9 @@ class NiiFileConverter:
         return img_fdata
 
     @staticmethod
-    def save_as_png(nii_file_path, dest):
+    def convert_to_npy(nii_file_path, dest):
         fdata = NiiFileConverter.read_nii_file(nii_file_path)
-        (x, y, z) = fdata.shape
-        for k in range(z):
-            slice = fdata[:, :, k]
-            slice = (
-                slice.astype(np.float64) / slice.max()
-            )  # normalize the data to 0 - 1
-            slice = 255 * slice
-            slice = slice.astype(np.uint8)
-            imageio.imwrite(os.path.join(dest, f"{k}.png"), slice)
+        np.save(dest, fdata)
 
 
 class DicomFileConverter:
@@ -214,49 +206,23 @@ class DirectoryMerger:
 
 
 def main():
-    lits_converter = LitsDbConverter(LITS_PATHS_FILE)
+    # lits_converter = LitsDbConverter(LITS_PATHS_FILE)
     # # #pg_converter = PgDbConverter(PG_PATHS_FILE)
 
-    lits_converter.save_as_png()
+    # lits_converter.save_as_png()
     # # #pg_converter.save_as_png()
 
     # image_rotator = ImageRotator(ROTATE_PATHS_FILE)
     # image_rotator.save_rotated()
     # # # print(MERGE_PATHS_FILE)
+
+    path = r"C:/Lits/"
+    nii_converter = NiiFileConverter()
+    img = nii_converter.read_nii_file(path + r"segmentation/segmentation-0.nii")
+    print(np.shape(img))
+
     directory_merger = DirectoryMerger(MERGE_PATHS_FILE)
     directory_merger.save_merged()
-
-    print(
-        len(
-            glob.glob(
-                "/home/kamkac/raid/liver6/images/raid/jachoo/share/liver/liver/imagesTr_gz/*"
-            )
-        )
-    )
-    print(
-        len(
-            glob.glob(
-                "/home/kamkac/raid/liver6/labels/raid/jachoo/share/liver/liver/labelsTr_gz/*"
-            )
-        )
-    )
-    print(len(glob.glob("/raid/kamkac/merged6_new/images/*")))
-    print(len(glob.glob("/raid/kamkac/merged6_new/labels/*")))
-
-    print(
-        len(
-            glob.glob(
-                "/home/kamkac/raid/liver6/images/raid/jachoo/share/liver/liver/imagesTr_gz/*"
-            )
-        )
-    )
-    print(
-        len(
-            glob.glob(
-                "/home/kamkac/raid/liver6/labels/raid/jachoo/share/liver/liver/labelsTr_gz/*"
-            )
-        )
-    )
 
 
 if __name__ == "__main__":
