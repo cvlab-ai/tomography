@@ -20,8 +20,8 @@ def prepare_lits_dataset(dataset_path, output_path):
     images_path = os.path.join(dataset_path, "imagesTr_gz")
     labels_path = os.path.join(dataset_path, "labelsTr_gz")
 
-    images_files = get_all_files(images_path, ".gz")[:15]
-    labels_files = get_all_files(labels_path, ".gz")[:15]
+    images_files = get_all_files(images_path, ".gz")
+    labels_files = get_all_files(labels_path, ".gz")
 
     for files, dir_name in ((images_files, "images"), (labels_files, "labels")):
         for file in files:

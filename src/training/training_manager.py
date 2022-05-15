@@ -44,9 +44,6 @@ def run_training(
             epoch_samples = 0
 
             for batch_index, (inputs, labels) in enumerate(data_loaders[phase]):
-                inputs = inputs.transpose(2, 1)
-                labels = labels.transpose_(2, 1)
-
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
