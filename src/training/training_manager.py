@@ -32,7 +32,6 @@ def run_training(
         # Each epoch has a training and validation phase
         for phase in ["train", "val"]:
             if phase == "train":
-                training_config.scheduler.step()
                 for param_group in training_config.optimizer.param_groups:
                     print("LR", param_group["lr"])
 
@@ -53,13 +52,14 @@ def run_training(
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == "train"):
-                    outputs = training_config.net(inputs)
+                    outputs = training_config.net(inputs.float())
                     loss = training_config.calc_loss(outputs, labels, metrics)
 
                     # backward + optimize only if in training phase
                     if phase == "train":
                         loss.backward()
                         training_config.optimizer.step()
+                        training_config.scheduler.step()
 
                 # statistics
                 epoch_samples += inputs.size(0)

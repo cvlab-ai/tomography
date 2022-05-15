@@ -8,7 +8,7 @@ import torch.nn as nn
 class TrainingConfig:
     def __init__(self):
         # Batch size for training
-        self.batch_size: int = 16
+        self.batch_size: int = 2
 
         # Number of folds for cross validation
         self.k_folds: int = 5
@@ -29,7 +29,7 @@ class TrainingConfig:
         # Mode layers definition
         self.net = UNet(
             n_channels=self.channels, n_classes=self.classes, bilinear=False
-        )
+        ).float()
 
         self.optimizer = optim.Adam(
             filter(lambda p: p.requires_grad, self.net.parameters()), lr=1e-4
@@ -63,7 +63,7 @@ class TrainingConfig:
     ) -> torch.Tensor:
         bce = F.binary_cross_entropy_with_logits(pred, target)
 
-        pred = F.sigmoid(pred)
+        pred = torch.sigmoid(pred)
         dice = self.dice_loss(pred, target)
 
         loss = bce * bce_weight + dice * (1 - bce_weight)
