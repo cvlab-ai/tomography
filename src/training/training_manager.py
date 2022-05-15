@@ -9,7 +9,7 @@ def run_training(
     training_name: str,
     training_config: TrainingConfig,
     device: torch.device,
-    data_loaders: dict
+    data_loaders: dict,
 ) -> None:
     """
     Runs the training loop.

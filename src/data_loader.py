@@ -24,9 +24,9 @@ class TomographyDataset(Dataset):
 
         item = self.metadata.iloc[idx]
         filename = f'{item["patient_id"]}\\slice_{item["slice_id"]}.npz'
-        image = np.load(os.path.join(self.images_dir, filename))['arr_0']
+        image = np.load(os.path.join(self.images_dir, filename))["arr_0"]
         image = np.reshape(image, (1, image.shape[0], image.shape[1]))
-        label = np.load(os.path.join(self.labels_dir, filename))['arr_0']
+        label = np.load(os.path.join(self.labels_dir, filename))["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
 
         if self.transform:
@@ -74,7 +74,9 @@ class TomographyDataset(Dataset):
 
         return folds
 
-    def create_k_fold_data_loaders(self, folds: [dict[str, [int]]], batch_size: int) -> [dict[str, DataLoader]]:
+    def create_k_fold_data_loaders(
+        self, folds: [dict[str, [int]]], batch_size: int
+    ) -> [dict[str, DataLoader]]:
         folds_data_loaders = []
         for fold in folds:
             train_loader = self.create_data_loader(fold["train"], batch_size)
@@ -95,7 +97,9 @@ class TomographyDataset(Dataset):
         return data_loader
 
     def patients_to_slice_ids(self, patients):
-        slice_ids = list(self.metadata[self.metadata["patient_id"].isin(patients)].index.values)
+        slice_ids = list(
+            self.metadata[self.metadata["patient_id"].isin(patients)].index.values
+        )
         return slice_ids
 
 
@@ -112,7 +116,9 @@ class SeededSubsetRandomSampler(Sampler):
         self.g.manual_seed(seed)
 
     def __iter__(self):
-        return (self.indices[i] for i in torch.randperm(len(self.indices), generator=self.g))
+        return (
+            self.indices[i] for i in torch.randperm(len(self.indices), generator=self.g)
+        )
 
     def __len__(self):
         return len(self.indices)

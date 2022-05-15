@@ -18,8 +18,12 @@ if __name__ == "__main__":
     folds = dataset.k_fold_split(train, k=training_config.k_folds)
     print(folds)
 
-    test_data_loader = dataset.create_data_loader(test, batch_size=training_config.batch_size)
-    folds_data_loaders = dataset.create_k_fold_data_loaders(folds, batch_size=training_config.batch_size)
+    test_data_loader = dataset.create_data_loader(
+        test, batch_size=training_config.batch_size
+    )
+    folds_data_loaders = dataset.create_k_fold_data_loaders(
+        folds, batch_size=training_config.batch_size
+    )
 
     for fold_data_loaders in folds_data_loaders:
         run_training("test", training_config, device, fold_data_loaders)

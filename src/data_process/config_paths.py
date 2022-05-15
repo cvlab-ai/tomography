@@ -18,15 +18,21 @@ class DataPathsManager:
         self.datasetName: str = self.config.get("DATASET", "DATASET_NAME")
         self.datasetDir: str = self.config.get("DATASET", "DATASET_PATH")
         self.datasetPath: str = (
-                self.datasetDir
-                + self.config.get("DATASET", "DATASET_PREFIX")
-                + self.config.get("DATASET", "DATASET_NAME")
+            self.datasetDir
+            + self.config.get("DATASET", "DATASET_PREFIX")
+            + self.config.get("DATASET", "DATASET_NAME")
         )
 
         # Load prepared data paths
-        self.trainDatasetPath: str = self.datasetDir + self.config.get("DATASET", "PREP_TRAIN_PATH")
-        self.valDatasetPath: str = self.datasetDir + self.config.get("DATASET", "PREP_VAL_PATH")
-        self.testDatasetPath: str = self.datasetDir + self.config.get("DATASET", "PREP_TEST_PATH")
+        self.trainDatasetPath: str = self.datasetDir + self.config.get(
+            "DATASET", "PREP_TRAIN_PATH"
+        )
+        self.valDatasetPath: str = self.datasetDir + self.config.get(
+            "DATASET", "PREP_VAL_PATH"
+        )
+        self.testDatasetPath: str = self.datasetDir + self.config.get(
+            "DATASET", "PREP_TEST_PATH"
+        )
 
         # Load and initialize training paths
         self.training_root_path: str = self.config.get("TRAINING", "TRAINING_ROOT_PATH")

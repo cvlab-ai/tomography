@@ -48,6 +48,7 @@ class NiiFileConverter:
         fdata = NiiFileConverter.read_nii_file(nii_file_path)
         np.save(dest, fdata)
 
+
 class DicomFileConverter:
     @staticmethod
     def read_dicom_file(dicom_file_path):
@@ -205,24 +206,24 @@ class DirectoryMerger:
 
 
 def main():
-    #lits_converter = LitsDbConverter(LITS_PATHS_FILE)
+    # lits_converter = LitsDbConverter(LITS_PATHS_FILE)
     # # #pg_converter = PgDbConverter(PG_PATHS_FILE)
 
-    #lits_converter.save_as_png()
+    # lits_converter.save_as_png()
     # # #pg_converter.save_as_png()
 
     # image_rotator = ImageRotator(ROTATE_PATHS_FILE)
     # image_rotator.save_rotated()
     # # # print(MERGE_PATHS_FILE)
 
-    path = r'C:/Lits/'
+    path = r"C:/Lits/"
     nii_converter = NiiFileConverter()
-    img = nii_converter.read_nii_file(path + r'segmentation/segmentation-0.nii')
+    img = nii_converter.read_nii_file(path + r"segmentation/segmentation-0.nii")
     print(np.shape(img))
-
 
     directory_merger = DirectoryMerger(MERGE_PATHS_FILE)
     directory_merger.save_merged()
+
 
 if __name__ == "__main__":
     main()
