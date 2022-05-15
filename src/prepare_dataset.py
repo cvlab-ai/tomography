@@ -46,7 +46,6 @@ def prepare_lits_dataset(dataset_path, output_path):
 
 def generate_csv(dir_path, csv_path):
     files = get_all_files(os.path.join(dir_path, "images"), ".npz")
-    dir_name = "images"
 
     d = []
     for file in files:
