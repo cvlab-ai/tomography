@@ -9,9 +9,9 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     training_config = TrainingConfig()
 
-    metadata = load_metadata("C:\\Pg\\lits_prepared\\metadata.csv")
+    metadata = load_metadata("C:\\PG\\tomografia_pg\\lits_prepared\\metadata.csv")
     print(metadata)
-    dataset = TomographyDataset("C:\\Pg\\lits_prepared", metadata)
+    dataset = TomographyDataset("C:\\PG\\tomografia_pg\\lits_prepared", metadata)
 
     train, test = dataset.train_test_split(0.2)
     print(test)

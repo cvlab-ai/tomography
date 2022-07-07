@@ -24,10 +24,9 @@ class TomographyDataset(Dataset):
     def __getitem__(self, idx):
 
         item = self.metadata.iloc[idx]
-        filename = f'{item["patient_id"]}\\slice_{item["slice_id"]}.npz'
-        image = np.load(os.path.join(self.images_dir, filename))["arr_0"]
+        image = np.load(os.path.join(self.dataset_dir, item["image_path"]))["arr_0"]
         image = np.reshape(image, (1, image.shape[0], image.shape[1]))
-        label = np.load(os.path.join(self.labels_dir, filename))["arr_0"]
+        label = np.load(os.path.join(self.dataset_dir, item["label_path"]))["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
 
         if self.transform:
