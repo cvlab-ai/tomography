@@ -4,6 +4,7 @@ import pandas as pd
 import re
 import os
 from data_loader import TomographyDataset
+import pydicom
 
 
 def get_all_files(dir_path, ext=""):
@@ -18,6 +19,27 @@ def get_all_files(dir_path, ext=""):
     return file_list
 
 
+def process_nifti(file: str, output_path: str, dir_name: str, pg: bool = False) -> None:
+    filename = (
+        os.path.basename(file)
+        .replace(".nii.gz", "")
+        .replace("liver_", "")
+        .replace("nii", "")
+    )
+    save_dir = os.path.join(output_path, dir_name, filename)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    image = nib.load(file).get_fdata()
+
+    for i in range(image.shape[2]):
+        image_slice = image[:, :, i]
+        index = i + 1 if pg else i
+        npy_filename = f"slice_{index}.npz"
+        np.savez_compressed(os.path.join(save_dir, npy_filename), image_slice)
+
+
 def prepare_lits_dataset(dataset_path, output_path):
     images_path = os.path.join(dataset_path, "imagesTr_gz")
     labels_path = os.path.join(dataset_path, "labelsTr_gz")
@@ -27,21 +49,42 @@ def prepare_lits_dataset(dataset_path, output_path):
 
     for files, dir_name in ((images_files, "images"), (labels_files, "labels")):
         for file in files:
+            process_nifti(file, output_path, dir_name)
 
-            filename = (
-                os.path.basename(file).replace(".nii.gz", "").replace("liver_", "")
-            )
-            save_dir = os.path.join(output_path, dir_name, filename)
 
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
+def prepare_pg_dataset(dataset_path, output_path):
+    images_path = os.path.join(dataset_path, "Liver3D_originals")
+    labels_path = os.path.join(dataset_path, "Liver3D_labels")
+    # Get files
+    images_files = get_all_files(images_path)
+    labels_files = get_all_files(labels_path)
 
-            image = nib.load(file).get_fdata()
+    # Images are in DICom format
+    for file in images_files:
+        filename = os.path.basename(file)
+        if filename == "DICOMDIR":
+            continue
+        save_dir = os.path.join(output_path, "images")
+        # \001\DICOMS\STU00001\SER00001 - we want to extract the patient ID, study ID and series ID
+        dir_parts = file.split("\\")
+        patient_id = dir_parts[-5]
+        series_id = dir_parts[-2][-2:]
 
-            for i in range(image.shape[2]):
-                image_slice = image[:, :, i]
-                npy_filename = f"slice_{i}.npz"
-                np.savez_compressed(os.path.join(save_dir, npy_filename), image_slice)
+        save_dir = os.path.join(save_dir, f"{patient_id}_{series_id}")
+        try:
+            slice_number = int(filename[3:])
+        except ValueError:
+            continue
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        ds = pydicom.read_file(file)
+        img = ds.pixel_array.astype(float)
+        npy_filename = f"slice_{slice_number}.npz"
+        np.savez_compressed(os.path.join(save_dir, npy_filename), img)
+
+    # Labels are in NIFTI format
+    for file in labels_files:
+        process_nifti(file, output_path, "labels", True)
 
 
 def generate_csv(dir_path, csv_path):
@@ -71,5 +114,11 @@ def load_metadata(csv_path):
 
 
 if __name__ == "__main__":
-    prepare_lits_dataset("C:\\Pg\\lits", "C:\\Pg\\lits_prepared")
-    generate_csv("C:\\Pg\\lits_prepared", "C:\\Pg\\lits_prepared")
+    # prepare_lits_dataset("D:\\domik\\Documents\\tomography\\data\\lits",
+    #                      "D:\\domik\\Documents\\tomography\\data\\lits_prepared")
+    # generate_csv("D:\\domik\\Documents\\tomography\\data\\lits_prepared",
+    #              "D:\\domik\\Documents\\tomography\\data\\lits_prepared")
+    prepare_pg_dataset(
+        "D:\\domik\\Documents\\tomography\\data\\pg",
+        "D:\\domik\\Documents\\tomography\\data\\pg_prepared",
+    )

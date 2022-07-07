@@ -1,7 +1,7 @@
 raid
 data
 venv
-src-old/__pycache__
+__pycache__
 notebook/.ipynb_checkpoints
 docs/build
 .idea/

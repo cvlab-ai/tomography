@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler, Sampler
 from sklearn.model_selection import KFold
+from typing import Dict, Tuple
 
 
 class TomographyDataset(Dataset):
@@ -36,7 +37,7 @@ class TomographyDataset(Dataset):
 
         return image, label
 
-    def train_test_split(self, test_ratio: float, seed: int = 42) -> (list, list):
+    def train_test_split(self, test_ratio: float, seed: int = 42) -> Tuple[list, list]:
         """
         Split the dataset into train and test set by patient ids.
         :param test_ratio: float, ratio of test set size to whole dataset size
@@ -55,7 +56,7 @@ class TomographyDataset(Dataset):
 
         return train, test
 
-    def k_fold_split(self, ids: [int], k: int, seed=42) -> [dict[str, [int]]]:
+    def k_fold_split(self, ids: list, k: int, seed: int = 42) -> list:
         """
         Split input patient_id list into and k train-val folds.
         :param ids:
@@ -74,9 +75,7 @@ class TomographyDataset(Dataset):
 
         return folds
 
-    def create_k_fold_data_loaders(
-        self, folds: [dict[str, [int]]], batch_size: int
-    ) -> [dict[str, DataLoader]]:
+    def create_k_fold_data_loaders(self, folds, batch_size):
         folds_data_loaders = []
         for fold in folds:
             train_loader = self.create_data_loader(fold["train"], batch_size)
