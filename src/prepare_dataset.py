@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 import re
 import os
+
+from typing import List, Tuple
+
 from data_loader import TomographyDataset
 import pydicom
 
@@ -42,7 +45,7 @@ def process_nifti(file: str, output_path: str, dir_name: str, pg: bool = False) 
 
 def prepare_lits_labels(dataset_path, output_path):
     labels_path = os.path.join(dataset_path, "labelsTr_gz")
-    labels_files = get_all_files(labels_path, ".gz")[:10]
+    labels_files = get_all_files(labels_path, ".gz")
 
     for file in labels_files:
         process_nifti(file, output_path, "labels")
@@ -72,9 +75,11 @@ def lits_metadata(processed_dataset_path):
     return df
 
 
-def prepare_lits_images(dataset_path, output_path, labeled_patients: list[int]):
+def prepare_lits_images(
+    dataset_path: str, output_path: str, labeled_patients: List[int]
+) -> None:
     images_path = os.path.join(dataset_path, "imagesTr_gz")
-    images_files = get_all_files(images_path, ".gz")[:3]
+    images_files = get_all_files(images_path, ".gz")
 
     id_pattern = re.compile(r"(\d)")
 
@@ -108,10 +113,8 @@ def pg_metadata(processed_dataset_path):
     # labels_files = list(filter(lambda k: LabelType.Vesicle.value not in k, labels_files))
     df = pd.DataFrame(labels_files, columns=["label_path"])
 
-    df["directory"] = df.apply(
-        lambda row: os.path.split((row["label_path"]))[0], axis=1
-    )
-    df["filename"] = df.apply(lambda row: os.path.basename((row["label_path"])), axis=1)
+    df["directory"] = df.apply(lambda row: os.path.split(row["label_path"])[0], axis=1)
+    df["filename"] = df.apply(lambda row: os.path.basename(row["label_path"]), axis=1)
     df["slice_id"] = df.apply(
         lambda row: slice_id_pattern.search(row["filename"]).group(1), axis=1
     )
@@ -205,7 +208,9 @@ def prepare_pg_labels(dataset_path, output_path):
         process_nifti(file, output_path, "labels", True)
 
 
-def prepare_pg_images(dataset_path, output_path, labeled_series: list[tuple[int, int]]):
+def prepare_pg_images(
+    dataset_path: str, output_path: str, labeled_series: List[Tuple[int, int]]
+) -> None:
     images_path = os.path.join(dataset_path, "Liver3D_originals")
     images_files = get_all_files(images_path)
 
@@ -259,7 +264,8 @@ def load_metadata(csv_path):
 
 if __name__ == "__main__":
     prepare_lits_dataset(
-        "C:\\PG\\tomografia_pg\\liver", "C:\\PG\\tomografia_pg\\lits_prepared"
+        "D:\\domik\\Documents\\tomography\\data\\lits",
+        "D:\\domik\\Documents\\tomography\\data\\lits-prepared",
     )
 
     # prepare_pg_dataset(

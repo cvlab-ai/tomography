@@ -5,3 +5,4 @@ __pycache__
 notebook/.ipynb_checkpoints
 docs/build
 .idea/
+src/runs

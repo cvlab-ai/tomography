@@ -1,20 +1,23 @@
+from torch.utils.tensorboard import SummaryWriter
+
 from src.models.unet import UNet
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.nn as nn
+import os
 
 
 class TrainingConfig:
     def __init__(self):
         # Batch size for training
-        self.batch_size: int = 2
+        self.batch_size: int = 4
 
         # Number of folds for cross validation
-        self.k_folds: int = 5
+        self.k_folds: int = 2
 
         # Number of epochs to train for
-        self.epochs: int = 50
+        self.epochs: int = 10
 
         # Learning rate
         self.learning_rate: float = 0.01
@@ -37,6 +40,23 @@ class TrainingConfig:
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer, step_size=30, gamma=0.1
         )
+
+    def create_tensorboard(self, log_dir: str) -> None:
+        """
+        Create the tensorboard object to use for logging.
+        :param log_dir: Directory to store logs in
+        """
+        # Check if dir runs/name exists, if yes, print error and exit
+        if os.path.exists(os.path.join("runs", log_dir)):
+            print("Training already exists")
+            exit()
+        self.tb = SummaryWriter(f"runs/{log_dir}")
+
+    def close_tensorboard(self) -> None:
+        """
+        Close the tensorboard writer.
+        """
+        self.tb.close()
 
     @staticmethod
     def dice_loss(
@@ -74,8 +94,9 @@ class TrainingConfig:
 
         return loss
 
-    @staticmethod
-    def print_metrics(metrics: dict, epoch_samples: int, phase: str) -> None:
+    def print_metrics(
+        self, metrics: dict, epoch_samples: int, phase: str, epoch: int
+    ) -> None:
         """
         Print out the metrics to stdout.
         :param metrics: dictionary containing the metrics
@@ -87,3 +108,6 @@ class TrainingConfig:
             outputs.append("{}: {:4f}".format(k, metrics[k] / epoch_samples))
 
         print("{}: {}".format(phase, ", ".join(outputs)))
+        # Dump the metrics to tensorboard
+        for k, v in metrics.items():
+            self.tb.add_scalar(f"{phase}-{k}", v / epoch_samples, epoch)

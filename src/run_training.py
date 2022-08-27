@@ -6,12 +6,20 @@ import torch
 import multiprocessing
 
 if __name__ == "__main__":
+    if torch.cuda.is_available():
+        print("CUDA is available")
+    else:
+        print("CUDA is not available")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     training_config = TrainingConfig()
 
-    metadata = load_metadata("C:\\PG\\tomografia_pg\\lits_prepared\\metadata.csv")
+    metadata = load_metadata(
+        "D:\\domik\\Documents\\tomography\\data\\lits-prepared\\metadata.csv"
+    )[:2000]
     print(metadata)
-    dataset = TomographyDataset("C:\\PG\\tomografia_pg\\lits_prepared", metadata)
+    dataset = TomographyDataset(
+        "D:\\domik\\Documents\\tomography\\data\\lits-prepared", metadata
+    )
 
     train, test = dataset.train_test_split(0.2)
     print(test)
@@ -25,5 +33,5 @@ if __name__ == "__main__":
         folds, batch_size=training_config.batch_size
     )
 
-    for fold_data_loaders in folds_data_loaders:
-        run_training("test", training_config, device, fold_data_loaders)
+    for i, fold_data_loaders in enumerate(folds_data_loaders):
+        run_training(f"u-net-fold-{i}", training_config, device, fold_data_loaders)

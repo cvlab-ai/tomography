@@ -19,7 +19,7 @@ def run_training(
     :param data_loaders: dictionary of dataloaders
     """
     print(f"Training {training_name} on device: {device}")
-
+    training_config.create_tensorboard(training_name)
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
@@ -43,9 +43,11 @@ def run_training(
             epoch_samples = 0
 
             for batch_index, (inputs, labels) in enumerate(data_loaders[phase]):
+                print(f"batch {batch_index}")
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-
+                if torch.cuda.is_available():
+                    training_config.net.cuda()
                 # zero the parameter gradients
                 training_config.optimizer.zero_grad()
 
@@ -64,7 +66,7 @@ def run_training(
                 # statistics
                 epoch_samples += inputs.size(0)
 
-            training_config.print_metrics(metrics, epoch_samples, phase)
+            training_config.print_metrics(metrics, epoch_samples, phase, epoch)
             epoch_loss = metrics["loss"] / epoch_samples
 
             # deep copy the model
@@ -80,3 +82,4 @@ def run_training(
 
     # load best model weights
     training_config.net.load_state_dict(best_model_wts)
+    training_config.close_tensorboard()
