@@ -34,4 +34,6 @@ if __name__ == "__main__":
     )
 
     for i, fold_data_loaders in enumerate(folds_data_loaders):
-        run_training(f"u-net-fold-{i}", training_config, device, fold_data_loaders)
+        run_training(
+            f"u-net-window-fold-{i}", training_config, device, fold_data_loaders
+        )

@@ -2,9 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-""" Convolutional block:
-    It follows a two 3x3 convolutional layer, each followed by a batch normalization and a relu activation.
-"""
+from src.models.window_layer import window_layer
 
 
 class DoubleConv(nn.Module):
@@ -72,7 +70,7 @@ class Up(nn.Module):
 
 class OutConv(nn.Module):
     def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x):
@@ -81,11 +79,12 @@ class OutConv(nn.Module):
 
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=False):
-        super(UNet, self).__init__()
+        super().__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.bilinear = bilinear
 
+        self.window_layer = window_layer(n_channels)
         self.inc = DoubleConv(n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)
@@ -99,7 +98,8 @@ class UNet(nn.Module):
         self.outc = OutConv(64, n_classes)
 
     def forward(self, x):
-        x1 = self.inc(x)
+        x0 = self.window_layer(x)
+        x1 = self.inc(x0)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
