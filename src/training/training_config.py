@@ -9,15 +9,15 @@ import os
 
 
 class TrainingConfig:
-    def __init__(self):
+    def __init__(self, custom_layer: nn.Module = None):
         # Batch size for training
         self.batch_size: int = 4
 
         # Number of folds for cross validation
-        self.k_folds: int = 2
+        self.k_folds: int = 5
 
         # Number of epochs to train for
-        self.epochs: int = 10
+        self.epochs: int = 100
 
         # Learning rate
         self.learning_rate: float = 0.01
@@ -31,7 +31,10 @@ class TrainingConfig:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # Mode layers definition
         self.net = UNet(
-            n_channels=self.channels, n_classes=self.classes, bilinear=False
+            n_channels=self.channels,
+            n_classes=self.classes,
+            bilinear=False,
+            custom_window_layer=custom_layer,
         ).float()
 
         self.optimizer = optim.Adam(

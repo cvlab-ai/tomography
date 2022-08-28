@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 
 
-class window_layer(nn.Module):
+class WindowLayerHardTanH(nn.Module):
     """
     Implementation of HU window activation.
     Shape:
@@ -16,7 +16,7 @@ class window_layer(nn.Module):
         - width - trainable parameter
     """
 
-    def __init__(self, in_features, center=300.0, width=400.0):
+    def __init__(self, center=300.0, width=400.0):
         """
         Initialization.
         INPUT:
@@ -25,7 +25,6 @@ class window_layer(nn.Module):
             aplha is initialized with zero value by default
         """
         super().__init__()
-        self.in_features = in_features
 
         # initialize center and width with the given values
         if center is None:

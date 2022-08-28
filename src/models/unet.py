@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.models.window_layer import window_layer
+from src.models.window_layer_hard_tanh import WindowLayerHardTanH
 
 
 class DoubleConv(nn.Module):
@@ -78,13 +78,13 @@ class OutConv(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes, bilinear=False):
+    def __init__(self, n_channels, n_classes, bilinear=False, custom_window_layer=None):
         super().__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.bilinear = bilinear
 
-        self.window_layer = window_layer(n_channels)
+        self.window_layer = custom_window_layer
         self.inc = DoubleConv(n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)
@@ -98,8 +98,9 @@ class UNet(nn.Module):
         self.outc = OutConv(64, n_classes)
 
     def forward(self, x):
-        x0 = self.window_layer(x)
-        x1 = self.inc(x0)
+        if self.custom_window_layer is not None:
+            x = self.window_layer(x)
+        x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
