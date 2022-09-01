@@ -4,10 +4,9 @@ import torch.nn.functional as F
 from torch.nn import Parameter
 
 
-class WindowLayerHardTanH(nn.Module):
+class WindowLayerAdaptiveTanh(nn.Module):
     """
-    Implementation of HU window activation. It applies hardtanh((x, center-width, center + width) to the input
-    elementwise.
+    Implementation of HU window activation. It applies tanh((x-center)/width) to the input elementwise.
     Shape:
         - Input: (N, *) where * means, any number of additional
           dimensions
@@ -41,9 +40,4 @@ class WindowLayerHardTanH(nn.Module):
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        return nn.functional.hardtanh(
-            x,
-            self.center.item() - self.width.item(),
-            self.center.item() + self.width.item(),
-            True,
-        )
+        return nn.functional.tanh((x - self.center.item()) / self.width.item())

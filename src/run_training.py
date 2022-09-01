@@ -1,4 +1,6 @@
 from src.data_loader import TomographyDataset
+from src.models.window_layer_adaptive_sigmoid import WindowLayerAdaptiveSigmoid
+from src.models.window_layer_adaptive_tanh import WindowLayerAdaptiveTanh
 from src.prepare_dataset import load_metadata
 from src.training.training_config import TrainingConfig
 from training.training_manager import run_training
@@ -16,10 +18,19 @@ if __name__ == "__main__":
     # U-net
 
     training_config_normalunet = TrainingConfig()
-    training_config_windowunet = TrainingConfig(WindowLayerHardTanH())
+    training_config_window_hard_tanh_unet = TrainingConfig(WindowLayerHardTanH())
+    training_config_window_adaptive_sigmoid_unet = TrainingConfig(
+        WindowLayerAdaptiveSigmoid()
+    )
+    training_config_window_adaptive_tanh_unet = TrainingConfig(
+        WindowLayerAdaptiveTanh()
+    )
+
     for config, name in [
         (training_config_normalunet, "unet"),
-        (training_config_windowunet, "unet-window"),
+        (training_config_window_hard_tanh_unet, "unet-hard-tanh-window"),
+        (training_config_window_adaptive_sigmoid_unet, "unet-adaptive-sigmoid-window"),
+        (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
         metadata = load_metadata(
             "D:\\domik\\Documents\\tomography\\data\\lits-prepared\\metadata.csv"
