@@ -23,6 +23,10 @@ def run_training(
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
+
+    if torch.cuda.is_available():
+        training_config.net.cuda()
+
     for epoch in range(training_config.epochs):
         print("Epoch {}/{}".format(epoch, training_config.epochs - 1))
         print("-" * 10)
@@ -43,11 +47,8 @@ def run_training(
             epoch_samples = 0
 
             for batch_index, (inputs, labels) in enumerate(data_loaders[phase]):
-                print(f"batch {batch_index}")
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-                if torch.cuda.is_available():
-                    training_config.net.cuda()
                 # zero the parameter gradients
                 training_config.optimizer.zero_grad()
 
