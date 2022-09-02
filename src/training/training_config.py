@@ -1,3 +1,4 @@
+import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
 
 from src.models.unet import UNet
@@ -27,7 +28,7 @@ class TrainingConfig:
         self.input_h = 512
         self.input_w = 512
         self.channels = 1
-        self.classes = 1
+        self.classes = 2
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # Mode layers definition
         self.net = UNet(
@@ -43,6 +44,7 @@ class TrainingConfig:
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer, step_size=30, gamma=0.1
         )
+        self.loss = nn.CrossEntropyLoss()
 
     def create_tensorboard(self, log_dir: str) -> None:
         """
@@ -77,25 +79,19 @@ class TrainingConfig:
 
         return loss.mean()
 
-    def calc_loss(
+    def calc_metrics(
         self,
         pred: torch.Tensor,
         target: torch.Tensor,
         metrics: dict,
-        bce_weight: float = 0.5,
-    ) -> torch.Tensor:
+    ) -> None:
         bce = F.binary_cross_entropy_with_logits(pred, target)
 
         pred = torch.sigmoid(pred)
         dice = self.dice_loss(pred, target)
 
-        loss = bce * bce_weight + dice * (1 - bce_weight)
-
         metrics["bce"] += bce.data.cpu().numpy() * target.size(0)
         metrics["dice"] += dice.data.cpu().numpy() * target.size(0)
-        metrics["loss"] += loss.data.cpu().numpy() * target.size(0)
-
-        return loss
 
     def print_metrics(
         self, metrics: dict, epoch_samples: int, phase: str, epoch: int

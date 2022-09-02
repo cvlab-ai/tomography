@@ -56,7 +56,9 @@ def run_training(
                 # track history if only in train
                 with torch.set_grad_enabled(phase == "train"):
                     outputs = training_config.net(inputs.float())
-                    loss = training_config.calc_loss(outputs, labels, metrics)
+                    loss = training_config.loss(outputs, labels)
+                    metrics["loss"] += loss.item()
+                    training_config.calc_metrics(outputs, labels, metrics)
 
                     # backward + optimize only if in training phase
                     if phase == "train":
