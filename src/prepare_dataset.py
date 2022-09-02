@@ -1,3 +1,4 @@
+import argparse
 import nibabel as nib
 import numpy as np
 import pandas as pd
@@ -261,12 +262,23 @@ def load_metadata(csv_path):
     df = pd.read_csv(csv_path, index_col="id")
     return df
 
-
 if __name__ == "__main__":
-    prepare_lits_dataset(
-        "D:\\domik\\Documents\\tomography\\data\\lits",
-        "D:\\domik\\Documents\\tomography\\data\\lits-prepared",
-    )
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("dataset", type=str, choices=["lits", "pg"], help="Dataset to process")
+    parser.add_argument("input", type=str, help="Dataset input directory")
+    parser.add_argument("output", type=str, help="Prepared dataset output directory")
+    args = parser.parse_args()
+
+    if args.dataset == "lits":
+        prepare_lits_dataset(args.input, args.output)
+    elif args.dataset == "pg":
+        prepare_pg_dataset(args.input, args.output)
+
+    # prepare_lits_dataset(
+    #     "C:\\PG\\tomografia_pg\\liver",
+    #     "C:\\PG\\tomografia_pg\\lits_prepared"
+    # )
 
     # prepare_pg_dataset(
     #     "C:\\PG\\tomografia_pg\\pg",
