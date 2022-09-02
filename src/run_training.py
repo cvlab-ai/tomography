@@ -34,7 +34,7 @@ if __name__ == "__main__":
     ]:
         metadata = load_metadata(
             "D:\\domik\\Documents\\tomography\\data\\lits-prepared\\metadata.csv"
-        )[:2000]
+        )
         print(metadata)
         dataset = TomographyDataset(
             "D:\\domik\\Documents\\tomography\\data\\lits-prepared", metadata
