@@ -25,7 +25,7 @@ def run_training(
     best_loss = 1e10
 
     if torch.cuda.is_available():
-        training_config.net.cuda()
+        training_config.net.cuda(device)
 
     for epoch in range(training_config.epochs):
         print("Epoch {}/{}".format(epoch, training_config.epochs - 1))
