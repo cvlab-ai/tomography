@@ -66,9 +66,10 @@ if __name__ == "__main__":
         )
 
         for i, fold_data_loaders in enumerate(folds_data_loaders):
-            run_training(
-                f"{name}-fold-{i}",
-                training_config_normalunet,
-                device,
-                fold_data_loaders,
-            )
+            if i == args.gpu:
+                run_training(
+                    f"{name}-fold-{i}",
+                    training_config_normalunet,
+                    device,
+                    fold_data_loaders,
+                )
