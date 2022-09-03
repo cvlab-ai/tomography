@@ -284,7 +284,18 @@ def load_metadata(csv_path):
     return df
 
 
+def check_processed_dataset(processed_dataset_path):
+    files = get_all_files(processed_dataset_path, ".npz")
+
+    for file in files:
+        try:
+            data = np.load(file)
+        except:
+            print(f"Error loading {file}")
+
+
 skip_existing = False
+check_files = False
 
 if __name__ == "__main__":
 
@@ -293,11 +304,17 @@ if __name__ == "__main__":
     parser.add_argument("input", type=str, help="Dataset input directory")
     parser.add_argument("output", type=str, help="Prepared dataset output directory")
     parser.add_argument("-s", action='store_true', help="Skip processing existing images and "
-                                                                           "labels (checks only if dir exists)") 
+                                                        "labels (checks only if dir exists)")
+    parser.add_argument("-c", action='store_true', help="Test processed files loading")
     args = parser.parse_args()
 
     if args.s:
         skip_existing = True
+        print("Skipping files already having a directory in output directory")
+
+    if args.c:
+        check_files = True
+        print("Processed file checking enabled")
 
     print(skip_existing)
 
@@ -305,6 +322,9 @@ if __name__ == "__main__":
         prepare_lits_dataset(args.input, args.output)
     elif args.dataset == "pg":
         prepare_pg_dataset(args.input, args.output)
+
+    if check_files:
+        check_processed_dataset(args.output)
 
     # prepare_lits_dataset(
     #     "C:\\PG\\tomografia_pg\\liver_test",
