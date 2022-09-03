@@ -32,10 +32,16 @@ def process_nifti(file: str, output_path: str, dir_name: str, pg: bool = False) 
     )
     save_dir = os.path.join(output_path, dir_name, filename)
 
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    if skip_existing and os.path.exists(save_dir):
+        return
+
+    if not os.path.exists(file):
+        raise FileNotFoundError
 
     image = nib.load(file).get_fdata()
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     for i in range(image.shape[2]):
         image_slice = image[:, :, i]
@@ -77,12 +83,12 @@ def lits_metadata(processed_dataset_path):
 
 
 def prepare_lits_images(
-    dataset_path: str, output_path: str, labeled_patients: List[int]
+        dataset_path: str, output_path: str, labeled_patients: List[int]
 ) -> None:
     images_path = os.path.join(dataset_path, "imagesTr_gz")
     images_files = get_all_files(images_path, ".gz")
 
-    id_pattern = re.compile(r"(\d)")
+    id_pattern = re.compile(r"(\d+)")
 
     for file in images_files:
         res = id_pattern.search(os.path.basename(file))
@@ -90,7 +96,18 @@ def prepare_lits_images(
             raise Exception("No patient ID in filename")
         patient_id = int(res.group(1))
         if patient_id in labeled_patients:
-            process_nifti(file, output_path, "images")
+            try:
+                process_nifti(file, output_path, "images")
+            except EOFError as e:
+                print(f"Error processing patient {patient_id} image")
+                # patient 43 WA
+                if patient_id == 43:
+                    wa43_path = os.path.join(os.getcwd(), "image_fix", "liver_43.nii.gz")
+                    print(f"Trying to load patient 43 image from {wa43_path}")
+                    try:
+                        process_nifti(wa43_path, output_path, "images")
+                    except FileNotFoundError:
+                        print("Fixed image file not found")
 
 
 def prepare_lits_dataset(dataset_path, output_path):
@@ -164,9 +181,9 @@ def pg_metadata(processed_dataset_path):
 
     df["unqualified"] = df.apply(
         lambda row: row["p"] is False
-        and row["v"] is False
-        and row["m"] is False
-        and row["vesicle"] is False,
+                    and row["v"] is False
+                    and row["m"] is False
+                    and row["vesicle"] is False,
         axis=1,
     )
 
@@ -210,7 +227,7 @@ def prepare_pg_labels(dataset_path, output_path):
 
 
 def prepare_pg_images(
-    dataset_path: str, output_path: str, labeled_series: List[Tuple[int, int]]
+        dataset_path: str, output_path: str, labeled_series: List[Tuple[int, int]]
 ) -> None:
     images_path = os.path.join(dataset_path, "Liver3D_originals")
     images_files = get_all_files(images_path)
@@ -235,6 +252,10 @@ def prepare_pg_images(
             continue
 
         save_dir = os.path.join(save_dir, f"{patient_id}_{series_id}")
+
+        if skip_existing and os.path.exists(save_dir):
+            continue
+
         try:
             slice_number = int(filename[3:])
         except ValueError:
@@ -262,13 +283,23 @@ def load_metadata(csv_path):
     df = pd.read_csv(csv_path, index_col="id")
     return df
 
+
+skip_existing = False
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("dataset", type=str, choices=["lits", "pg"], help="Dataset to process")
     parser.add_argument("input", type=str, help="Dataset input directory")
     parser.add_argument("output", type=str, help="Prepared dataset output directory")
+    parser.add_argument("-s", action='store_true', help="Skip processing existing images and "
+                                                                           "labels (checks only if dir exists)") 
     args = parser.parse_args()
+
+    if args.s:
+        skip_existing = True
+
+    print(skip_existing)
 
     if args.dataset == "lits":
         prepare_lits_dataset(args.input, args.output)
@@ -276,8 +307,8 @@ if __name__ == "__main__":
         prepare_pg_dataset(args.input, args.output)
 
     # prepare_lits_dataset(
-    #     "C:\\PG\\tomografia_pg\\liver",
-    #     "C:\\PG\\tomografia_pg\\lits_prepared"
+    #     "C:\\PG\\tomografia_pg\\liver_test",
+    #     "C:\\PG\\tomografia_pg\\liver_test_proc"
     # )
 
     # prepare_pg_dataset(

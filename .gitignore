@@ -6,3 +6,5 @@ notebook/.ipynb_checkpoints
 docs/build
 .idea/
 src/runs
+src/image_fix
+src/label_fix
