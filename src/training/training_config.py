@@ -29,7 +29,6 @@ class TrainingConfig:
         self.input_w = 512
         self.channels = 1
         self.classes = 2
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         # Mode layers definition
         self.net = UNet(
             n_channels=self.channels,

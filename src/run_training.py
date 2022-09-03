@@ -1,3 +1,5 @@
+import argparse
+
 from src.data_loader import TomographyDataset
 from src.models.window_layer_adaptive_sigmoid import WindowLayerAdaptiveSigmoid
 from src.models.window_layer_adaptive_tanh import WindowLayerAdaptiveTanh
@@ -9,11 +11,21 @@ import multiprocessing
 from src.models.window_layer_hard_tanh import WindowLayerHardTanH
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("batch_size", type=int, help="Batch size")
+    parser.add_argument("epochs", type=int, help="Number of epochs")
+    parser.add_argument("gpu", type=int, help="GPU no")
+    parser.add_argument("metadata", type=str, help="Metadata path")
+    parser.add_argument("dataset", type=str, help="Dataset path")
+
+    args = parser.parse_args()
+
     if torch.cuda.is_available():
         print("CUDA is available")
     else:
         print("CUDA is not available")
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
 
@@ -32,12 +44,13 @@ if __name__ == "__main__":
         (training_config_window_adaptive_sigmoid_unet, "unet-adaptive-sigmoid-window"),
         (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
+        config.batch_size = args.batch_size
         metadata = load_metadata(
-            "D:\\domik\\Documents\\tomography\\data\\lits-prepared\\metadata.csv"
+            args.metadata
         )
         print(metadata)
         dataset = TomographyDataset(
-            "D:\\domik\\Documents\\tomography\\data\\lits-prepared", metadata
+            args.dataset, metadata
         )
 
         train, test = dataset.train_test_split(0.2)
