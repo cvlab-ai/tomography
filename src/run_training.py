@@ -12,7 +12,9 @@ from src.models.window_layer_hard_tanh import WindowLayerHardTanH
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument("batch_size", type=int, help="Batch size")
     parser.add_argument("epochs", type=int, help="Number of epochs")
     parser.add_argument("gpu", type=int, help="GPU no")
@@ -45,13 +47,10 @@ if __name__ == "__main__":
         (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
         config.batch_size = args.batch_size
-        metadata = load_metadata(
-            args.metadata
-        )
+        metadata = load_metadata(args.metadata)
         print(metadata)
-        dataset = TomographyDataset(
-            args.dataset, metadata
-        )
+        dataset = TomographyDataset(args.dataset, metadata)
+        config.epochs = args.epochs
 
         train, test = dataset.train_test_split(0.2)
         print(test)
