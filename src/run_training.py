@@ -47,7 +47,7 @@ if __name__ == "__main__":
         # (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
         config.batch_size = args.batch_size
-        metadata = load_metadata(args.metadata)
+        metadata = load_metadata(args.metadata)[:2000]
         print(metadata)
         dataset = TomographyDataset(args.dataset, metadata)
         config.epochs = args.epochs

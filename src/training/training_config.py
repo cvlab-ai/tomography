@@ -35,6 +35,7 @@ class TrainingConfig:
         self.net = UNet(
             n_channels=self.channels,
             n_classes=self.classes,
+            window_layer=custom_layer,
         ).float()
 
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
