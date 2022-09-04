@@ -1,7 +1,7 @@
 import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
 
-from src.models.unet import UNet
+from src.models.unet import UNet  # type: ignore
 import torch
 from torch import Tensor
 import torch.optim as optim
@@ -32,9 +32,8 @@ class TrainingConfig:
         self.classes = 2
         # Mode layers definition
         self.net = UNet(
-            n_channels=self.channels,
-            n_classes=self.classes,
-            bilinear=False,
+            in_channels=self.channels,
+            out_channels=self.classes,
             custom_window_layer=custom_layer,
         ).float()
 
