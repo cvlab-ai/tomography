@@ -28,11 +28,8 @@ class TomographyDataset(Dataset):
         image = np.reshape(image, (1, image.shape[0], image.shape[1]))
         label = np.load(os.path.join(self.dataset_dir, item["label_path"]))["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
-        label = np.repeat(label[...], 2, axis=0)
-        label_1_map = np.vectorize(lambda x: x if x == 1.0 else 0.0)
-        label_2_map = np.vectorize(lambda x: 1.0 if x == 2.0 else 0.0)
+        label_1_map = np.vectorize(lambda x: x if x >= 1.0 else 0.0)
         label[0] = label_1_map(label[0])
-        label[1] = label_2_map(label[1])
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

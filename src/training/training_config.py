@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.nn as nn
 import os
+import numpy as np
 
 
 class TrainingConfig:
@@ -16,7 +17,7 @@ class TrainingConfig:
         self.batch_size: int = 4
 
         # Number of folds for cross validation
-        self.k_folds: int = 5
+        self.k_folds: int = 2
 
         # Number of epochs to train for
         self.epochs: int = 100
@@ -29,16 +30,17 @@ class TrainingConfig:
         self.input_h = 512
         self.input_w = 512
         self.channels = 1
-        self.classes = 2
+        self.classes = 1
         # Mode layers definition
         self.net = UNet(
-            in_channels=self.channels,
-            out_channels=self.classes,
-            custom_window_layer=custom_layer,
+            n_channels=self.channels,
+            n_classes=self.classes,
         ).float()
 
+        self.grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
         self.optimizer = optim.Adam(
-            filter(lambda p: p.requires_grad, self.net.parameters()), lr=1e-4
+            filter(lambda p: p.requires_grad, self.net.parameters()),
+            lr=self.learning_rate,
         )
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer, step_size=30, gamma=0.1
@@ -62,61 +64,27 @@ class TrainingConfig:
         """
         self.tb.close()
 
-    def dice_coeff(
-        self,
-        input: Tensor,
-        target: Tensor,
-        reduce_batch_first: bool = False,
-        epsilon: float = 1e-6,
-    ) -> float:
-        # Average of Dice coefficient for all batches, or for a single mask
-        assert input.size() == target.size()
-        if input.dim() == 2 and reduce_batch_first:
-            raise ValueError(
-                f"Dice: asked to reduce batch but got tensor without batch dimension (shape {input.shape})"
-            )
+    def dice_loss(self, pred, target):
+        return 1 - self.dice_coeff(pred, target)
 
-        if input.dim() == 2 or reduce_batch_first:
-            inter = torch.dot(input.reshape(-1), target.reshape(-1))
-            sets_sum = torch.sum(input) + torch.sum(target)
-            if sets_sum.item() == 0:
-                sets_sum = 2 * inter
+    def dice_coeff(self, pred, target):
+        smooth = 1.0
+        iflat = pred.view(-1)
+        tflat = target.view(-1)
+        intersection = (iflat * tflat).sum()
+        return (2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth)
 
-            return (2 * inter + epsilon) / (sets_sum + epsilon)
-        else:
-            # compute and average metric for each batch element
-            dice = 0.0
-            for i in range(input.shape[0]):
-                dice += self.dice_coeff(input[i, ...], target[i, ...])
-            return dice / input.shape[0]
-
-    def multiclass_dice_coeff(
-        self,
-        input: Tensor,
-        target: Tensor,
-        reduce_batch_first: bool = False,
-        epsilon: float = 1e-6,
-    ) -> float:
-        # Average of Dice coefficient for all classes
-        assert input.size() == target.size()
-        dice = 0.0
-        for channel in range(input.shape[1]):
-            dice += self.dice_coeff(
-                input[:, channel, ...],
-                target[:, channel, ...],
-                reduce_batch_first,
-                epsilon,
-            )
-
-        return dice / input.shape[1]
-
-    def dice_loss(
-        self, input: Tensor, target: Tensor, multiclass: bool = False
-    ) -> float:
-        # Dice loss (objective to minimize) between 0 and 1
-        assert input.size() == target.size()
-        fn = self.multiclass_dice_coeff if multiclass else self.dice_coeff
-        return 1 - fn(input, target, reduce_batch_first=True)
+    def jsc(self, pred, target):
+        """
+        Calculate jacard similarity coefficient
+        """
+        smooth = 1.0
+        iflat = pred.view(-1)
+        tflat = target.view(-1)
+        intersection = (iflat * tflat).sum()
+        return (intersection + smooth) / (
+            iflat.sum() + tflat.sum() - intersection + smooth
+        )
 
     def calc_metrics(
         self,
@@ -124,12 +92,9 @@ class TrainingConfig:
         target: torch.Tensor,
         metrics: dict,
     ) -> None:
-        bce = F.binary_cross_entropy_with_logits(pred, target)
-
-        dice = self.multiclass_dice_coeff(pred, target, reduce_batch_first=True)
-
-        metrics["bce"] += bce.item() * target.size(0)
+        dice = self.dice_coeff(pred, target)
         metrics["dice"] += dice * target.size(0)
+        metrics["jsc"] += self.jsc(pred, target) * target.size(0)
 
     def print_metrics(
         self, metrics: dict, epoch_samples: int, phase: str, epoch: int

@@ -28,16 +28,6 @@ def run_training(
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
 
-    optimizer = optim.RMSprop(
-        training_config.net.parameters(),
-        lr=training_config.learning_rate,
-        weight_decay=1e-8,
-        momentum=0.9,
-    )
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, "max", patience=2
-    )  # goal: maximize Dice score
-    grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
     global_step = 0
 
     if torch.cuda.is_available():
@@ -68,26 +58,23 @@ def run_training(
             ) as pbar:
                 for (inputs, labels) in data_loaders[phase]:
                     inputs = inputs.to(device, dtype=torch.float32)
-                    labels = labels.to(device, dtype=torch.float32)
+                    labels = labels.to(device, dtype=torch.long)
 
                     # forward
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         outputs = training_config.net(inputs)
-                        loss = training_config.loss(
-                            outputs, labels
-                        ) + training_config.dice_loss(
-                            F.softmax(outputs, dim=1).float(), labels
-                        )
-                        metrics["loss"] += loss.item()
+                        loss = training_config.dice_loss(outputs, labels)
+
+                        metrics["loss"] += loss.item() * inputs.size(0)
                         training_config.calc_metrics(outputs, labels, metrics)
 
                         # backward + optimize only if in training phase
                         if phase == "train":
                             training_config.optimizer.zero_grad()
-                            grad_scaler.scale(loss).backward()
-                            grad_scaler.step(optimizer)
-                            grad_scaler.update()
+                            training_config.grad_scaler.scale(loss).backward()
+                            training_config.grad_scaler.step(training_config.optimizer)
+                            training_config.grad_scaler.update()
 
                     # statistics
                     epoch_samples += inputs.size(0)
@@ -98,9 +85,6 @@ def run_training(
             training_config.print_metrics(metrics, epoch_samples, phase, epoch)
             epoch_loss = metrics["loss"] / epoch_samples
 
-            # deep copy the model
-            if phase == "val":
-                scheduler.step(epoch_loss)
             if phase == "val" and epoch_loss < best_loss:
                 print("saving best model")
                 best_loss = epoch_loss
