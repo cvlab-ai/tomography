@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import argparse
 import nibabel as nib
 import numpy as np
@@ -54,7 +55,8 @@ def prepare_lits_labels(dataset_path, output_path):
     labels_path = os.path.join(dataset_path, "labelsTr_gz")
     labels_files = get_all_files(labels_path, ".gz")
 
-    for file in labels_files:
+    print("Processing labels")
+    for file in tqdm(labels_files):
         process_nifti(file, output_path, "labels")
 
 
@@ -90,7 +92,8 @@ def prepare_lits_images(
 
     id_pattern = re.compile(r"(\d+)")
 
-    for file in images_files:
+    print("Processing images")
+    for file in tqdm(images_files):
         res = id_pattern.search(os.path.basename(file))
         if res is None:
             raise Exception("No patient ID in filename")
@@ -220,7 +223,8 @@ def prepare_pg_labels(dataset_path, output_path):
 
     id_pattern = re.compile(r"(\d+)_(\d+).*")
     # Labels are in NIFTI format
-    for file in labels_files:
+    print("Processing labels")
+    for file in tqdm(labels_files):
         if int(id_pattern.search(file).group(1)) >= 3:
             break
         process_nifti(file, output_path, "labels", True)
@@ -233,7 +237,8 @@ def prepare_pg_images(
     images_files = get_all_files(images_path)
 
     # Images are in DICom format
-    for file in images_files:
+    print("Processing images")
+    for file in tqdm(images_files):
         filename = os.path.basename(file)
         if filename == "DICOMDIR":
             continue
@@ -284,7 +289,18 @@ def load_metadata(csv_path):
     return df
 
 
+def check_processed_dataset(processed_dataset_path):
+    files = get_all_files(processed_dataset_path, ".npz")
+    print("Verifying processed slices")
+    for file in tqdm(files):
+        try:
+            data = np.load(file)
+        except:
+            print(f"Error loading {file}")
+
+
 skip_existing = False
+check_files = False
 
 if __name__ == "__main__":
 
@@ -293,11 +309,17 @@ if __name__ == "__main__":
     parser.add_argument("input", type=str, help="Dataset input directory")
     parser.add_argument("output", type=str, help="Prepared dataset output directory")
     parser.add_argument("-s", action='store_true', help="Skip processing existing images and "
-                                                                           "labels (checks only if dir exists)") 
+                                                        "labels (checks only if dir exists)")
+    parser.add_argument("-c", action='store_true', help="Test processed files loading")
     args = parser.parse_args()
 
     if args.s:
         skip_existing = True
+        print("Skipping files already having a directory in output directory")
+
+    if args.c:
+        check_files = True
+        print("Processed file checking enabled")
 
     print(skip_existing)
 
@@ -305,6 +327,9 @@ if __name__ == "__main__":
         prepare_lits_dataset(args.input, args.output)
     elif args.dataset == "pg":
         prepare_pg_dataset(args.input, args.output)
+
+    if check_files:
+        check_processed_dataset(args.output)
 
     # prepare_lits_dataset(
     #     "C:\\PG\\tomografia_pg\\liver_test",
