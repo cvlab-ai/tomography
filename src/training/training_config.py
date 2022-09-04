@@ -3,6 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.models.unet import UNet
 import torch
+from torch import Tensor
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.nn as nn
@@ -62,21 +63,61 @@ class TrainingConfig:
         """
         self.tb.close()
 
-    @staticmethod
+    def dice_coeff(
+        self,
+        input: Tensor,
+        target: Tensor,
+        reduce_batch_first: bool = False,
+        epsilon: float = 1e-6,
+    ) -> float:
+        # Average of Dice coefficient for all batches, or for a single mask
+        assert input.size() == target.size()
+        if input.dim() == 2 and reduce_batch_first:
+            raise ValueError(
+                f"Dice: asked to reduce batch but got tensor without batch dimension (shape {input.shape})"
+            )
+
+        if input.dim() == 2 or reduce_batch_first:
+            inter = torch.dot(input.reshape(-1), target.reshape(-1))
+            sets_sum = torch.sum(input) + torch.sum(target)
+            if sets_sum.item() == 0:
+                sets_sum = 2 * inter
+
+            return (2 * inter + epsilon) / (sets_sum + epsilon)
+        else:
+            # compute and average metric for each batch element
+            dice = 0.0
+            for i in range(input.shape[0]):
+                dice += self.dice_coeff(input[i, ...], target[i, ...])
+            return dice / input.shape[0]
+
+    def multiclass_dice_coeff(
+        self,
+        input: Tensor,
+        target: Tensor,
+        reduce_batch_first: bool = False,
+        epsilon: float = 1e-6,
+    ) -> float:
+        # Average of Dice coefficient for all classes
+        assert input.size() == target.size()
+        dice = 0.0
+        for channel in range(input.shape[1]):
+            dice += self.dice_coeff(
+                input[:, channel, ...],
+                target[:, channel, ...],
+                reduce_batch_first,
+                epsilon,
+            )
+
+        return dice / input.shape[1]
+
     def dice_loss(
-        pred: torch.Tensor, target: torch.Tensor, smooth: float = 1.0
-    ) -> torch.Tensor:
-        pred = pred.contiguous()
-        target = target.contiguous()
-
-        intersection = (pred * target).sum(dim=2).sum(dim=2)
-
-        loss = 1 - (
-            (2.0 * intersection + smooth)
-            / (pred.sum(dim=2).sum(dim=2) + target.sum(dim=2).sum(dim=2) + smooth)
-        )
-
-        return loss.mean()
+        self, input: Tensor, target: Tensor, multiclass: bool = False
+    ) -> float:
+        # Dice loss (objective to minimize) between 0 and 1
+        assert input.size() == target.size()
+        fn = self.multiclass_dice_coeff if multiclass else self.dice_coeff
+        return 1 - fn(input, target, reduce_batch_first=True)
 
     def calc_metrics(
         self,
@@ -86,11 +127,10 @@ class TrainingConfig:
     ) -> None:
         bce = F.binary_cross_entropy_with_logits(pred, target)
 
-        pred = torch.sigmoid(pred)
-        dice = self.dice_loss(pred, target)
+        dice = self.multiclass_dice_coeff(pred, target, reduce_batch_first=True)
 
-        metrics["bce"] += bce.data.cpu().numpy() * target.size(0)
-        metrics["dice"] += dice.data.cpu().numpy() * target.size(0)
+        metrics["bce"] += bce.item() * target.size(0)
+        metrics["dice"] += dice * target.size(0)
 
     def print_metrics(
         self, metrics: dict, epoch_samples: int, phase: str, epoch: int

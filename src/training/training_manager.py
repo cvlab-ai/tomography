@@ -1,8 +1,12 @@
+from torch import optim
+
 from src.training.training_config import TrainingConfig
 import copy
 import torch
 import time
 from collections import defaultdict
+from tqdm import tqdm
+import torch.nn.functional as F
 
 
 def run_training(
@@ -23,6 +27,18 @@ def run_training(
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
+
+    optimizer = optim.RMSprop(
+        training_config.net.parameters(),
+        lr=training_config.learning_rate,
+        weight_decay=1e-8,
+        momentum=0.9,
+    )
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, "max", patience=2
+    )  # goal: maximize Dice score
+    grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
+    global_step = 0
 
     if torch.cuda.is_available():
         training_config.net.cuda()
@@ -45,34 +61,46 @@ def run_training(
 
             metrics: dict = defaultdict(float)
             epoch_samples = 0
+            with tqdm(
+                total=len(data_loaders[phase]) * training_config.batch_size,
+                desc=f"Epoch {epoch}/{training_config.epochs}",
+                unit="img",
+            ) as pbar:
+                for (inputs, labels) in data_loaders[phase]:
+                    inputs = inputs.to(device, dtype=torch.float32)
+                    labels = labels.to(device, dtype=torch.float32)
 
-            for batch_index, (inputs, labels) in enumerate(data_loaders[phase]):
-                inputs = inputs.to(device)
-                labels = labels.to(device)
-                # zero the parameter gradients
-                training_config.optimizer.zero_grad()
+                    # forward
+                    # track history if only in train
+                    with torch.set_grad_enabled(phase == "train"):
+                        outputs = training_config.net(inputs)
+                        loss = training_config.loss(
+                            outputs, labels
+                        ) + training_config.dice_loss(
+                            F.softmax(outputs, dim=1).float(), labels
+                        )
+                        metrics["loss"] += loss.item()
+                        training_config.calc_metrics(outputs, labels, metrics)
 
-                # forward
-                # track history if only in train
-                with torch.set_grad_enabled(phase == "train"):
-                    outputs = training_config.net(inputs.float())
-                    loss = training_config.loss(outputs, labels)
-                    metrics["loss"] += loss.item()
-                    training_config.calc_metrics(outputs, labels, metrics)
+                        # backward + optimize only if in training phase
+                        if phase == "train":
+                            training_config.optimizer.zero_grad()
+                            grad_scaler.scale(loss).backward()
+                            grad_scaler.step(optimizer)
+                            grad_scaler.update()
 
-                    # backward + optimize only if in training phase
-                    if phase == "train":
-                        loss.backward()
-                        training_config.optimizer.step()
-                        training_config.scheduler.step()
-
-                # statistics
-                epoch_samples += inputs.size(0)
+                    # statistics
+                    epoch_samples += inputs.size(0)
+                    pbar.update(inputs.size(0))
+                    global_step += 1
+                    pbar.set_postfix(**{"loss (batch)": loss.item()})
 
             training_config.print_metrics(metrics, epoch_samples, phase, epoch)
             epoch_loss = metrics["loss"] / epoch_samples
 
             # deep copy the model
+            if phase == "val":
+                scheduler.step(epoch_loss)
             if phase == "val" and epoch_loss < best_loss:
                 print("saving best model")
                 best_loss = epoch_loss
