@@ -11,10 +11,12 @@ from typing import Dict, Tuple
 
 class TomographyDataset(Dataset):
     def __init__(self, dataset_dir, metadata, transform=None, target_transform=None):
+        # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
+        self.metadata[:, 2] = self.metadata[:, 2].astype(np.string_)
+        self.metadata[:, 3] = self.metadata[:, 3].astype(np.string_)
+
         self.dataset_dir = dataset_dir
-        self.images_dir = os.path.join(dataset_dir, "images")
-        self.labels_dir = os.path.join(dataset_dir, "labels")
         self.transform = transform
         self.target_transform = target_transform
 
@@ -22,11 +24,13 @@ class TomographyDataset(Dataset):
         return len(self.metadata)
 
     def __getitem__(self, idx):
-
-        item = self.metadata.iloc[idx]
-        image = np.load(os.path.join(self.dataset_dir, item["image_path"]))["arr_0"]
+        image = np.load(
+            os.path.join(self.dataset_dir, str(self.metadata[idx][2], encoding="utf-8"))
+        )["arr_0"]
         image = np.reshape(image, (1, image.shape[0], image.shape[1]))
-        label = np.load(os.path.join(self.dataset_dir, item["label_path"]))["arr_0"]
+        label = np.load(
+            os.path.join(self.dataset_dir, str(self.metadata[idx][3], encoding="utf-8"))
+        )["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
         label_1_map = np.vectorize(lambda x: x if x >= 1.0 else 0.0)
         label[0] = label_1_map(label[0])
@@ -46,8 +50,8 @@ class TomographyDataset(Dataset):
         """
         np.random.seed(seed)
 
-        metadata_grouped = self.metadata.groupby("patient_id")
-        patients = [*metadata_grouped.groups]
+        # Get all patient ids, patient id has 1 index in np array
+        patients = np.unique(self.metadata[:, 1])
         np.random.shuffle(patients)
 
         test_size = int(len(patients) * test_ratio)
@@ -92,13 +96,17 @@ class TomographyDataset(Dataset):
         else:
             sampler = SubsetSequentialSampler(slice_ids)
 
-        data_loader = DataLoader(self, batch_size=batch_size, sampler=sampler)
+        data_loader = DataLoader(
+            self, batch_size=batch_size, sampler=sampler, num_workers=4
+        )
         return data_loader
 
     def patients_to_slice_ids(self, patients):
-        slice_ids = list(
-            self.metadata[self.metadata["patient_id"].isin(patients)].index.values
-        )
+        # Get all slice ids for given patients
+        slice_ids = []
+        for patient in patients:
+            patient_slice_ids = np.where(self.metadata[:, 1] == patient)[0]
+            slice_ids.extend(patient_slice_ids)
         return slice_ids
 
 

@@ -7,11 +7,12 @@ from src.prepare_dataset import load_metadata
 from src.training.training_config import TrainingConfig
 from training.training_manager import run_training
 import torch
+import torch.multiprocessing as mp
 import multiprocessing
 from src.models.window_layer_hard_tanh import WindowLayerHardTanH
 
 if __name__ == "__main__":
-
+    mp.set_start_method("spawn", force=True)
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -47,8 +48,10 @@ if __name__ == "__main__":
         # (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
         config.batch_size = args.batch_size
-        metadata = load_metadata(args.metadata)[:2000]
+        metadata = load_metadata(args.metadata)
         print(metadata)
+        metadata.drop("series_id", axis=1, inplace=True)
+        metadata = metadata.to_numpy()
         dataset = TomographyDataset(args.dataset, metadata)
         config.epochs = args.epochs
 
@@ -57,9 +60,6 @@ if __name__ == "__main__":
         folds = dataset.k_fold_split(train, k=training_config_normalunet.k_folds)
         print(folds)
 
-        test_data_loader = dataset.create_data_loader(
-            test, batch_size=training_config_normalunet.batch_size
-        )
         folds_data_loaders = dataset.create_k_fold_data_loaders(
             folds, batch_size=training_config_normalunet.batch_size
         )
