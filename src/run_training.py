@@ -78,7 +78,7 @@ if __name__ == "__main__":
         if i == args.fold:
             run_training(
                 f"{name}-fold-{i}",
-                training_config_normalunet,
+                config,
                 device,
                 fold_data_loaders,
             )
