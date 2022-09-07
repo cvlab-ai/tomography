@@ -56,6 +56,7 @@ def run_training(
                 desc=f"Epoch {epoch}/{training_config.epochs}",
                 unit="img",
             ) as pbar:
+                cache_iterator = 0
                 for (inputs, labels) in data_loaders[phase]:
                     inputs = inputs.to(device, dtype=torch.float32)
                     labels = labels.to(device, dtype=torch.long)
@@ -76,11 +77,18 @@ def run_training(
                             training_config.grad_scaler.step(training_config.optimizer)
                             training_config.grad_scaler.update()
 
+                        del outputs
+                        del loss
+
                     # statistics
                     epoch_samples += inputs.size(0)
                     pbar.update(inputs.size(0))
                     global_step += 1
                     pbar.set_postfix(**{"loss (batch)": loss.item()})
+                    cache_iterator += 1
+                    if cache_iterator >= 100:
+                        cache_iterator = 0
+                        torch.cuda.empty_cache()
 
             training_config.print_metrics(metrics, epoch_samples, phase, epoch)
             epoch_loss = metrics["loss"] / epoch_samples
@@ -89,6 +97,7 @@ def run_training(
                 print("saving best model")
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(training_config.net.state_dict())
+
 
         time_elapsed = time.time() - since
         print("{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))

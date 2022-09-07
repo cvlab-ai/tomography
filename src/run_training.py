@@ -11,6 +11,8 @@ import torch.multiprocessing as mp
 import multiprocessing
 from src.models.window_layer_hard_tanh import WindowLayerHardTanH
 
+overwrite_previous_trainings = False
+
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
     parser = argparse.ArgumentParser(
@@ -21,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("gpu", type=int, help="GPU no")
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
-
+    parser.add_argument("-o", action='store_true', help="Overwrite previous trainings dirs")
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -47,6 +49,10 @@ if __name__ == "__main__":
         # (training_config_window_adaptive_sigmoid_unet, "unet-adaptive-sigmoid-window"),
         # (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window"),
     ]:
+        if args.o:
+            config.overwrite_previous_trainings = True
+            print("Overwriting previous trainings enabled")
+
         config.batch_size = args.batch_size
         metadata = load_metadata(args.metadata)
         print(metadata)

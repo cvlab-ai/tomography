@@ -1,3 +1,5 @@
+import shutil
+
 import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
 
@@ -9,6 +11,8 @@ import torch.nn.functional as F
 import torch.nn as nn
 import os
 import numpy as np
+from datetime import datetime
+
 
 
 class TrainingConfig:
@@ -48,15 +52,21 @@ class TrainingConfig:
         )
         self.loss = nn.CrossEntropyLoss()
 
+        self.overwrite_previous_trainings = False
+
     def create_tensorboard(self, log_dir: str) -> None:
         """
         Create the tensorboard object to use for logging.
         :param log_dir: Directory to store logs in
         """
         # Check if dir runs/name exists, if yes, print error and exit
-        if os.path.exists(os.path.join("runs", log_dir)):
+        path = os.path.join("runs", log_dir)
+        if os.path.exists(path):
             print("Training already exists")
-            exit()
+            if self.overwrite_previous_trainings:
+                os.rename(path, path + datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
+            else:
+                exit()
         self.tb = SummaryWriter(f"runs/{log_dir}")
 
     def close_tensorboard(self) -> None:
