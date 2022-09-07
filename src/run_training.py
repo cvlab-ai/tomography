@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("batch_size", type=int, help="Batch size")
     parser.add_argument("epochs", type=int, help="Number of epochs")
     parser.add_argument("gpu", type=int, help="GPU no")
+    parser.add_argument("fold", type=int, help="Fold number")
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
     parser.add_argument("experiment", type=str, help="Experimenal layer",
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     )
 
     for i, fold_data_loaders in enumerate(folds_data_loaders):
-        if i == args.gpu:
+        if i == args.fold:
             run_training(
                 f"{name}-fold-{i}",
                 training_config_normalunet,
