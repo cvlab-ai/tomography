@@ -94,8 +94,8 @@ class TrainingConfig:
         metrics: dict,
     ) -> None:
         dice = self.dice_coeff(pred, target)
-        metrics["dice"] += dice * target.size(0)
-        metrics["jsc"] += self.jsc(pred, target) * target.size(0)
+        metrics["dice"] += dice.item() * target.size(0)
+        metrics["jsc"] += self.jsc(pred, target).item() * target.size(0)
 
     def print_metrics(
         self, metrics: dict, epoch_samples: int, phase: str, epoch: int
