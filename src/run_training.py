@@ -22,11 +22,18 @@ if __name__ == "__main__":
     parser.add_argument("epochs", type=int, help="Number of epochs")
     parser.add_argument("gpu", type=int, help="GPU no")
     parser.add_argument("fold", type=int, help="Fold number")
+    parser.add_argument("loss", type=float, help="loss number")
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
-    parser.add_argument("experiment", type=str, help="Experimenal layer",
-                        choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"])
-    parser.add_argument("-o", action='store_true', help="Overwrite previous trainings dirs")
+    parser.add_argument(
+        "experiment",
+        type=str,
+        help="Experimenal layer",
+        choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
+    )
+    parser.add_argument(
+        "-o", action="store_true", help="Overwrite previous trainings dirs"
+    )
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -45,10 +52,18 @@ if __name__ == "__main__":
         WindowLayerAdaptiveTanh()
     )
 
-    experiments = {"normal_unet": (training_config_normalunet, "unet"),
-                   "hard_tanh": (training_config_window_hard_tanh_unet, "unet-hard-tanh-window"),
-                   "adaptive_sigmoid": (training_config_window_adaptive_sigmoid_unet, "unet-adaptive-sigmoid-window"),
-                   "adaptive_tanh": (training_config_window_adaptive_tanh_unet, "unet-adaptive-tanh-window")}
+    experiments = {
+        "normal_unet": (training_config_normalunet, "unet"),
+        "hard_tanh": (training_config_window_hard_tanh_unet, "unet-hard-tanh-window"),
+        "adaptive_sigmoid": (
+            training_config_window_adaptive_sigmoid_unet,
+            "unet-adaptive-sigmoid-window",
+        ),
+        "adaptive_tanh": (
+            training_config_window_adaptive_tanh_unet,
+            "unet-adaptive-tanh-window",
+        ),
+    }
 
     config, name = experiments[args.experiment]
     print(f"Running {args.experiment}")
@@ -58,6 +73,7 @@ if __name__ == "__main__":
         print("Overwriting previous trainings enabled")
 
     config.batch_size = args.batch_size
+    config.loss = args.loss
     metadata = load_metadata(args.metadata)
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
