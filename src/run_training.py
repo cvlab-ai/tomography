@@ -93,7 +93,7 @@ if __name__ == "__main__":
     for i, fold_data_loaders in enumerate(folds_data_loaders):
         if i == args.fold:
             run_training(
-                f"{name}-fold-{i}",
+                f"{name}-fold-{i}-loss-{args.loss}",
                 config,
                 device,
                 fold_data_loaders,
