@@ -72,9 +72,8 @@ def run_training(
 
                         # backward + optimize only if in training phase
                         if phase == "train":
-                            training_config.grad_scaler.scale(loss).backward()
-                            training_config.grad_scaler.step(training_config.optimizer)
-                            training_config.grad_scaler.update()
+                            loss.backward()
+                            training_config.optimizer.step()
 
                     # statistics
                     epoch_samples += inputs.size(0)

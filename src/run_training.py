@@ -43,15 +43,15 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
-    training_config_normalunet = TrainingConfig(learning_rate=args.loss)
+    training_config_normalunet = TrainingConfig(learning_rate=args.learning_rate)
     training_config_window_hard_tanh_unet = TrainingConfig(
-        WindowLayerHardTanH(), learning_rate=args.loss
+        WindowLayerHardTanH(), learning_rate=args.learning_rate
     )
     training_config_window_adaptive_sigmoid_unet = TrainingConfig(
-        WindowLayerAdaptiveSigmoid(), learning_rate=args.loss
+        WindowLayerAdaptiveSigmoid(), learning_rate=args.learning_rate
     )
     training_config_window_adaptive_tanh_unet = TrainingConfig(
-        WindowLayerAdaptiveTanh(), learning_rate=args.loss
+        WindowLayerAdaptiveTanh(), learning_rate=args.learning_rate
     )
 
     experiments = {
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     for i, fold_data_loaders in enumerate(folds_data_loaders):
         if i == args.fold:
             run_training(
-                f"{name}-fold-{i}-loss-{args.loss}",
+                f"{name}-fold-{i}-loss-{args.learning_rate}",
                 config,
                 device,
                 fold_data_loaders,
