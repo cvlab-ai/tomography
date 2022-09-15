@@ -128,3 +128,9 @@ class TrainingConfig:
         # Dump the metrics to tensorboard
         for k, v in metrics.items():
             self.tb.add_scalar(f"{phase}-{k}", v / epoch_samples, epoch)
+
+    def save_model(self, name: str) -> None:
+        """
+        Save the model to disk.
+        """
+        torch.save(self.net.state_dict(), name)

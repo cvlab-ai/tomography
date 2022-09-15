@@ -101,3 +101,5 @@ def run_training(
     # load best model weights
     training_config.net.load_state_dict(best_model_wts)
     training_config.close_tensorboard()
+    # save model
+    training_config.save_model(training_name)
