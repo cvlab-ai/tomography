@@ -14,9 +14,8 @@ import numpy as np
 from datetime import datetime
 
 
-
 class TrainingConfig:
-    def __init__(self, custom_layer: nn.Module = None):
+    def __init__(self, custom_layer: nn.Module = None, learning_rate: float = 0.001):
         # Batch size for training
         self.batch_size: int = 4
 
@@ -27,7 +26,7 @@ class TrainingConfig:
         self.epochs: int = 100
 
         # Learning rate
-        self.learning_rate: float = 0.01
+        self.learning_rate: float = learning_rate
         self.learning_rate_patience: int = 3
 
         # Input shape

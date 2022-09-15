@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("epochs", type=int, help="Number of epochs")
     parser.add_argument("gpu", type=int, help="GPU no")
     parser.add_argument("fold", type=int, help="Fold number")
-    parser.add_argument("loss", type=float, help="loss number")
+    parser.add_argument("learning_rate", type=float, help="loss number")
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
     parser.add_argument(
@@ -43,13 +43,15 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
-    training_config_normalunet = TrainingConfig()
-    training_config_window_hard_tanh_unet = TrainingConfig(WindowLayerHardTanH())
+    training_config_normalunet = TrainingConfig(learning_rate=args.loss)
+    training_config_window_hard_tanh_unet = TrainingConfig(
+        WindowLayerHardTanH(), learning_rate=args.loss
+    )
     training_config_window_adaptive_sigmoid_unet = TrainingConfig(
-        WindowLayerAdaptiveSigmoid()
+        WindowLayerAdaptiveSigmoid(), learning_rate=args.loss
     )
     training_config_window_adaptive_tanh_unet = TrainingConfig(
-        WindowLayerAdaptiveTanh()
+        WindowLayerAdaptiveTanh(), learning_rate=args.loss
     )
 
     experiments = {
@@ -73,7 +75,6 @@ if __name__ == "__main__":
         print("Overwriting previous trainings enabled")
 
     config.batch_size = args.batch_size
-    config.loss = args.loss
     metadata = load_metadata(args.metadata)
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
