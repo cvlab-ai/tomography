@@ -60,7 +60,7 @@ def run_training(
                 for (inputs, labels) in data_loaders[phase]:
                     inputs = inputs.to(device, dtype=torch.float32)
                     labels = labels.to(device, dtype=torch.long)
-
+                    training_config.optimizer.zero_grad()
                     # forward
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
@@ -72,7 +72,6 @@ def run_training(
 
                         # backward + optimize only if in training phase
                         if phase == "train":
-                            training_config.optimizer.zero_grad()
                             training_config.grad_scaler.scale(loss).backward()
                             training_config.grad_scaler.step(training_config.optimizer)
                             training_config.grad_scaler.update()
@@ -86,6 +85,8 @@ def run_training(
             training_config.print_metrics(metrics, epoch_samples, phase, epoch)
             epoch_loss = metrics["loss"] / epoch_samples
 
+            if phase == "val":
+                training_config.scheduler.step(epoch_loss)
             if phase == "val" and epoch_loss < best_loss:
                 print("saving best model")
                 best_loss = epoch_loss

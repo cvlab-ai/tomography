@@ -46,8 +46,13 @@ class TrainingConfig:
             filter(lambda p: p.requires_grad, self.net.parameters()),
             lr=self.learning_rate,
         )
-        self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer, step_size=30, gamma=0.1
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode="min",
+            factor=0.1,
+            patience=10,
+            threshold=0.0000001,
+            threshold_mode="abs",
         )
         self.loss = nn.CrossEntropyLoss()
 
