@@ -5,7 +5,7 @@ from src.models.window_layer_adaptive_sigmoid import WindowLayerAdaptiveSigmoid
 from src.models.window_layer_adaptive_tanh import WindowLayerAdaptiveTanh
 from src.prepare_dataset import load_metadata
 from src.training.training_config import TrainingConfig
-from training.training_manager import run_training
+from training.training_manager import run_training, run_test
 import torch
 import torch.multiprocessing as mp
 import multiprocessing
@@ -34,6 +34,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o", action="store_true", help="Overwrite previous trainings dirs"
     )
+
+    parser.add_argument(
+        "--test", type=str, help="Test model"
+    )
+
+
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -87,15 +93,26 @@ if __name__ == "__main__":
     folds = dataset.k_fold_split(train, k=training_config_normalunet.k_folds)
     print(folds)
 
-    folds_data_loaders = dataset.create_k_fold_data_loaders(
-        folds, batch_size=training_config_normalunet.batch_size
-    )
+    if args.test:
+        test_dataset = dataset.create_data_loader(test, config.batch_size)
+        weights_filename = args.test
+        run_test(
+            weights_filename,
+            config,
+            device,
+            test_dataset,
+        )
 
-    for i, fold_data_loaders in enumerate(folds_data_loaders):
-        if i == args.fold:
-            run_training(
-                f"{name}-fold-{i}-loss-{args.learning_rate}",
-                config,
-                device,
-                fold_data_loaders,
-            )
+    else:
+        folds_data_loaders = dataset.create_k_fold_data_loaders(
+            folds, batch_size=training_config_normalunet.batch_size
+        )
+
+        for i, fold_data_loaders in enumerate(folds_data_loaders):
+            if i == args.fold:
+                run_training(
+                    f"{name}-fold-{i}-loss-{args.learning_rate}",
+                    config,
+                    device,
+                    fold_data_loaders,
+                )
