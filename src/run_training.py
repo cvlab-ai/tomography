@@ -5,7 +5,7 @@ from src.prepare_dataset import load_metadata
 from training.training_manager import run_training
 import torch
 import torch.multiprocessing as mp
-from src.config_builder import config_builder, ConfigMode
+from src.config_factory import config_factory, ConfigMode
 
 overwrite_previous_trainings = False
 
@@ -45,7 +45,7 @@ def main():
 
     # U-net
     name = args.experiment
-    config = config_builder(
+    config = config_factory(
         ConfigMode.TRAIN, name, args.o, args.batch_size, args.epochs, args.learning_rate
     )
     print(f"Running {args.experiment}")

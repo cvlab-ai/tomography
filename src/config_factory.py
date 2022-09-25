@@ -34,7 +34,7 @@ def get_layer(special_layer: str) -> Union[nn.Module, None]:
     return None
 
 
-def config_builder(
+def config_factory(
     mode: ConfigMode,
     special_layer: str,
     overwrite: bool,

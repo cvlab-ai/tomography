@@ -5,7 +5,7 @@ from src.prepare_dataset import load_metadata
 from testing.testing_manager import run_test
 import torch
 import torch.multiprocessing as mp
-from src.config_builder import config_builder, ConfigMode
+from src.config_factory import config_factory, ConfigMode
 
 overwrite_previous_trainings = False
 
@@ -44,7 +44,7 @@ def main():
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
     name = args.experiment
     # U-net
-    config = config_builder(ConfigMode.TEST, name, args.test, args.batch_size)
+    config = config_factory(ConfigMode.TEST, name, args.test, args.batch_size)
     metadata = load_metadata(args.metadata)
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
