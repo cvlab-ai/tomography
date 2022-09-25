@@ -54,7 +54,7 @@ def main():
         config.overwrite_previous_trainings = True
         print("Overwriting previous trainings enabled")
 
-    metadata = load_metadata(args.metadata)[:2000]
+    metadata = load_metadata(args.metadata)
 
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()

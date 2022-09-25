@@ -27,7 +27,7 @@ class TrainingConfig:
         self.batch_size: int = batch_size
 
         # Number of folds for cross validation
-        self.k_folds: int = 2
+        self.k_folds: int = 5
 
         # Number of epochs to train for
         self.epochs: int = epochs
