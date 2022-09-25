@@ -1,20 +1,16 @@
 import argparse
 
 from src.data_loader import TomographyDataset
-from src.models.window_layer_adaptive_sigmoid import WindowLayerAdaptiveSigmoid
-from src.models.window_layer_adaptive_tanh import WindowLayerAdaptiveTanh
 from src.prepare_dataset import load_metadata
-from src.training.training_config import TrainingConfig
 from training.training_manager import run_training
 import torch
 import torch.multiprocessing as mp
-import multiprocessing
-from src.models.window_layer_hard_tanh import WindowLayerHardTanH
+from src.config_builder import config_builder, ConfigMode
 
 overwrite_previous_trainings = False
 
-if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
+
+def training_arg_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -34,7 +30,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o", action="store_true", help="Overwrite previous trainings dirs"
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    mp.set_start_method("spawn", force=True)
+    args = training_arg_parser()
 
     if torch.cuda.is_available():
         print("CUDA is available")
@@ -43,51 +44,28 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
-    training_config_normalunet = TrainingConfig(learning_rate=args.learning_rate)
-    training_config_window_hard_tanh_unet = TrainingConfig(
-        WindowLayerHardTanH(), learning_rate=args.learning_rate
+    name = args.experiment
+    config = config_builder(
+        ConfigMode.TRAIN, name, args.o, args.batch_size, args.epochs, args.learning_rate
     )
-    training_config_window_adaptive_sigmoid_unet = TrainingConfig(
-        WindowLayerAdaptiveSigmoid(), learning_rate=args.learning_rate
-    )
-    training_config_window_adaptive_tanh_unet = TrainingConfig(
-        WindowLayerAdaptiveTanh(), learning_rate=args.learning_rate
-    )
-
-    experiments = {
-        "normal_unet": (training_config_normalunet, "unet"),
-        "hard_tanh": (training_config_window_hard_tanh_unet, "unet-hard-tanh-window"),
-        "adaptive_sigmoid": (
-            training_config_window_adaptive_sigmoid_unet,
-            "unet-adaptive-sigmoid-window",
-        ),
-        "adaptive_tanh": (
-            training_config_window_adaptive_tanh_unet,
-            "unet-adaptive-tanh-window",
-        ),
-    }
-
-    config, name = experiments[args.experiment]
     print(f"Running {args.experiment}")
 
     if args.o:
         config.overwrite_previous_trainings = True
         print("Overwriting previous trainings enabled")
 
-    config.batch_size = args.batch_size
     metadata = load_metadata(args.metadata)[:2000]
-    print(metadata)
+
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
     dataset = TomographyDataset(args.dataset, metadata)
-    config.epochs = args.epochs
 
     train, _ = dataset.train_test_split(0.2)
-    folds = dataset.k_fold_split(train, k=training_config_normalunet.k_folds)
+    folds = dataset.k_fold_split(train, k=config.k_folds)
     print(folds)
 
     folds_data_loaders = dataset.create_k_fold_data_loaders(
-        folds, batch_size=training_config_normalunet.batch_size
+        folds, batch_size=config.batch_size
     )
 
     for i, fold_data_loaders in enumerate(folds_data_loaders):
@@ -98,3 +76,7 @@ if __name__ == "__main__":
                 device,
                 fold_data_loaders,
             )
+
+
+if __name__ == "__main__":
+    main()

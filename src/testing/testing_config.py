@@ -15,9 +15,9 @@ from datetime import datetime
 
 
 class TestingConfig:
-    def __init__(self, custom_layer: nn.Module = None):
+    def __init__(self, custom_layer: nn.Module, overwrite: bool, batch_size: int):
         # Batch size for training
-        self.batch_size: int = 4
+        self.batch_size: int = batch_size
 
         # Input shape
         self.input_h = 512
@@ -31,5 +31,5 @@ class TestingConfig:
             window_layer=custom_layer,
         ).float()
 
-        self.overwrite_previous_testing = False
+        self.overwrite_previous = overwrite
         self.tb = None

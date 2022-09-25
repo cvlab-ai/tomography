@@ -15,15 +15,22 @@ from datetime import datetime
 
 
 class TrainingConfig:
-    def __init__(self, custom_layer: nn.Module = None, learning_rate: float = 0.001):
+    def __init__(
+        self,
+        custom_layer: nn.Module,
+        overwrite: bool,
+        batch_size: int,
+        epochs: int,
+        learning_rate: float,
+    ):
         # Batch size for training
-        self.batch_size: int = 4
+        self.batch_size: int = batch_size
 
         # Number of folds for cross validation
         self.k_folds: int = 2
 
         # Number of epochs to train for
-        self.epochs: int = 5
+        self.epochs: int = epochs
 
         # Learning rate
         self.learning_rate: float = learning_rate
@@ -56,5 +63,5 @@ class TrainingConfig:
         )
         self.loss = nn.CrossEntropyLoss()
 
-        self.overwrite_previous_trainings = False
+        self.overwrite_previous = overwrite
         self.tb = None

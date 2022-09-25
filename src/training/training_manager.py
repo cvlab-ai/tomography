@@ -27,7 +27,7 @@ def run_training(
     """
     print(f"Training {training_name} on device: {device}")
     training_config.tb = utils.create_tensorboard(
-        training_name, training_config.overwrite_previous_trainings
+        training_name, training_config.overwrite_previous
     )
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())

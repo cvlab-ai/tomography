@@ -26,7 +26,7 @@ def run_test(
     test_name = weights_filename + "_test"
     print(f"Testing {weights_filename} on device: {device}")
     testing_config.tb = utils.create_tensorboard(
-        test_name, testing_config.overwrite_previous_testing
+        test_name, testing_config.overwrite_previous
     )
     testing_config.net.load_state_dict(torch.load(weights_filename))
 

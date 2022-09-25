@@ -1,20 +1,16 @@
 import argparse
 
 from src.data_loader import TomographyDataset
-from src.models.window_layer_adaptive_sigmoid import WindowLayerAdaptiveSigmoid
-from src.models.window_layer_adaptive_tanh import WindowLayerAdaptiveTanh
 from src.prepare_dataset import load_metadata
-from src.testing.testing_config import TestingConfig
 from testing.testing_manager import run_test
 import torch
 import torch.multiprocessing as mp
-import multiprocessing
-from src.models.window_layer_hard_tanh import WindowLayerHardTanH
+from src.config_builder import config_builder, ConfigMode
 
 overwrite_previous_trainings = False
 
-if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
+
+def test_arg_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -33,43 +29,22 @@ if __name__ == "__main__":
         "-o", action="store_true", help="Overwrite previous trainings dirs"
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    mp.set_start_method("spawn", force=True)
+    args = test_arg_parser()
 
     if torch.cuda.is_available():
         print("CUDA is available")
     else:
         print("CUDA is not available")
+
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
-
+    name = args.experiment
     # U-net
-    testing_config_normalunet = TestingConfig()
-    testing_config_window_hard_tanh_unet = TestingConfig(WindowLayerHardTanH())
-    testing_config_window_adaptive_sigmoid_unet = TestingConfig(
-        WindowLayerAdaptiveSigmoid()
-    )
-    testing_config_window_adaptive_tanh_unet = TestingConfig(WindowLayerAdaptiveTanh())
-
-    experiments = {
-        "normal_unet": (testing_config_normalunet, "unet"),
-        "hard_tanh": (testing_config_window_hard_tanh_unet, "unet-hard-tanh-window"),
-        "adaptive_sigmoid": (
-            testing_config_window_adaptive_sigmoid_unet,
-            "unet-adaptive-sigmoid-window",
-        ),
-        "adaptive_tanh": (
-            testing_config_window_adaptive_tanh_unet,
-            "unet-adaptive-tanh-window",
-        ),
-    }
-
-    config, name = experiments[args.experiment]
-    print(f"Running {args.experiment}")
-
-    if args.o:
-        config.overwrite_previous_testing = True
-        print("Overwriting previous trainings enabled")
-
-    config.batch_size = args.batch_size
+    config = config_builder(ConfigMode.TEST, name, args.test, args.batch_size)
     metadata = load_metadata(args.metadata)
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
@@ -87,3 +62,7 @@ if __name__ == "__main__":
         device,
         test_dataset,
     )
+
+
+if __name__ == "__main__":
+    main()
