@@ -22,6 +22,7 @@ class TrainingConfig:
         batch_size: int,
         epochs: int,
         learning_rate: float,
+        window_learning_rate: float,
     ):
         # Batch size for training
         self.batch_size: int = batch_size
@@ -34,6 +35,7 @@ class TrainingConfig:
 
         # Learning rate
         self.learning_rate: float = learning_rate
+        self.window_learning_rate: float = window_learning_rate
         self.learning_rate_patience: int = 3
 
         # Input shape
@@ -47,12 +49,35 @@ class TrainingConfig:
             n_classes=self.classes,
             window_layer=custom_layer,
         ).float()
-
+        print(self.net)
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
-        self.optimizer = optim.Adam(
-            filter(lambda p: p.requires_grad, self.net.parameters()),
-            lr=self.learning_rate,
-        )
+        if custom_layer is None:
+            self.optimizer = optim.Adam(
+                self.net.parameters(),
+                lr=self.learning_rate,
+            )
+        else:
+            layer_name = "window_layer"
+            params = list(
+                filter(lambda kv: layer_name in kv[0], self.net.named_parameters())
+            )
+            base_params = list(
+                filter(lambda kv: layer_name not in kv[0], self.net.named_parameters())
+            )
+            self.optimizer = optim.Adam(
+                [
+                    {
+                        "params": [param[1] for param in params],
+                        "lr": self.window_learning_rate,
+                    },
+                    {
+                        "params": [param[1] for param in base_params],
+                        "lr": self.learning_rate,
+                    },
+                ],
+                lr=self.learning_rate,
+            )
+
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
             mode="min",

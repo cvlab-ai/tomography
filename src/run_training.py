@@ -18,7 +18,10 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument("epochs", type=int, help="Number of epochs")
     parser.add_argument("gpu", type=int, help="GPU no")
     parser.add_argument("fold", type=int, help="Fold number")
-    parser.add_argument("learning_rate", type=float, help="loss number")
+    parser.add_argument("learning_rate", type=float, help="network learning rate")
+    parser.add_argument(
+        "window_learning_rate", type=float, help="learning rate of window layer"
+    )
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
     parser.add_argument(
@@ -71,7 +74,7 @@ def main():
     for i, fold_data_loaders in enumerate(folds_data_loaders):
         if i == args.fold:
             run_training(
-                f"{name}-fold-{i}-loss-{args.learning_rate}",
+                f"{name}-fold-{i}-loss-{args.learning_rate}-window-{args.window_learning_rate}",
                 config,
                 device,
                 fold_data_loaders,

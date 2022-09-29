@@ -17,7 +17,7 @@ class WindowLayerHardTanH(nn.Module):
         - width - trainable parameter
     """
 
-    def __init__(self, center=150.0, width=200.0):
+    def __init__(self, center=150.0, width=2000.0):
         """
         Initialization.
         INPUT:

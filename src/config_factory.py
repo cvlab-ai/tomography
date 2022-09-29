@@ -41,6 +41,7 @@ def config_factory(
     batch_size: int,
     epochs: int = 50,
     learning_rate: float = 0.0001,
+    window_learning_rate: float = 0.0001,
 ) -> Union[TrainingConfig, TestingConfig]:
     """
     Returns config based on parameters
@@ -54,7 +55,9 @@ def config_factory(
     """
     layer = get_layer(special_layer)
     if mode == ConfigMode.TRAIN:
-        return TrainingConfig(layer, overwrite, batch_size, epochs, learning_rate)
+        return TrainingConfig(
+            layer, overwrite, batch_size, epochs, learning_rate, window_learning_rate
+        )
     elif mode == ConfigMode.TEST:
         return TestingConfig(layer, overwrite, batch_size)
     raise ValueError("Invalid mode")
