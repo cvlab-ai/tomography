@@ -271,7 +271,7 @@ def prepare_pg_images(
             continue
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        ds = pydicom.read_file(file)
+        ds = pydicom.read_file(file)  # type: ignore
         img = ds.pixel_array.astype(float)
         npy_filename = f"slice_{slice_number}.npz"
         np.savez_compressed(os.path.join(save_dir, npy_filename), img)
