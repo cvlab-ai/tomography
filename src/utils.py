@@ -66,7 +66,7 @@ def calc_metrics(
     target: torch.Tensor,
     metrics: dict,
 ) -> None:
-    dice_coeff_metric = Dice(average='micro', multiclass=True)
+    dice_coeff_metric = Dice(average="micro", multiclass=True)
     dice = dice_coeff_metric(pred, target)
     metrics["dice"] += dice.item() * target.size(0)
     metrics["jsc"] += jsc(pred, target).item() * target.size(0)
