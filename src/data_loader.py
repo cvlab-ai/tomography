@@ -7,15 +7,24 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler, Sampler
 from sklearn.model_selection import KFold
 from typing import Dict, Tuple
+from scipy.ndimage import convolve
 
 
 class TomographyDataset(Dataset):
-    def __init__(self, dataset_dir, metadata, transform=None, target_transform=None):
+    def __init__(
+        self,
+        dataset_dir,
+        metadata,
+        target_size=512,
+        transform=None,
+        target_transform=None,
+    ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
         self.metadata[:, 2] = self.metadata[:, 2].astype(np.string_)
         self.metadata[:, 3] = self.metadata[:, 3].astype(np.string_)
 
+        self.target_size = target_size
         self.dataset_dir = dataset_dir
         self.transform = transform
         self.target_transform = target_transform
@@ -32,8 +41,18 @@ class TomographyDataset(Dataset):
             os.path.join(self.dataset_dir, str(self.metadata[idx][3], encoding="utf-8"))
         )["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
-        label_1_map = np.vectorize(lambda x: x if x >= 1.0 else 0.0)
+        label_1_map = np.vectorize(lambda x: 1.0 if x >= 1.0 else 0.0)
         label[0] = label_1_map(label[0])
+
+        if self.target_size != image.shape[1]:
+            factor = int(image.shape[1] / self.target_size)
+            filter = np.ones((1, factor, factor)) / (factor ** 2)
+            # reshape all images and labels to target size using downscaling
+            image = convolve(image, filter)[:, 0::factor, 0::factor]
+            label_sampled = convolve(label, filter)[:, 0::factor, 0::factor]
+            # check if label valuesare binary, if not, make them binary
+            label = np.where(label_sampled > 0.5, 1, 0)
+
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
