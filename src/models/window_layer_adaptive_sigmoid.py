@@ -25,19 +25,24 @@ class WindowLayerAdaptiveSigmoid(nn.Module):
         """
         super().__init__()
 
+        center_grad = center is not None
+        width_grad = width is not None
+        center_init = 0 if center is None else center
+        width_init = 1 if width is None else width
+
         # initialize center and width with the given values
-        if center is None:
-            self.center = Parameter(torch.tensor(0.0), requires_grad=True)
-        else:
-            self.center = Parameter(torch.tensor(center), requires_grad=True)
-        if width is None:
-            self.width = Parameter(torch.tensor(0.0), requires_grad=True)
-        else:
-            self.width = Parameter(torch.tensor(width / 5), requires_grad=True)
+        self.center = Parameter(torch.Tensor(1), requires_grad=center_grad)
+        torch.nn.init.constant(self.center, center_init)
+
+        self.width = Parameter(torch.Tensor(1), requires_grad=width_grad)
+        torch.nn.init.constant(self.center, width_init)
 
     def forward(self, x):
         """
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        return nn.functional.sigmoid((x - self.center.item()) / self.width.item())
+        lower_level = self.center - (self.width / 2)
+        upper_level = self.center + (self.width / 2)
+        y = torch.clamp_(x, lower_level, upper_level)
+        return nn.functional.sigmoid(y)
