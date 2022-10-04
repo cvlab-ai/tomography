@@ -1,5 +1,7 @@
 from torch import optim
+from torch.utils.data import DataLoader
 
+import src.utils as utils
 from src.training.training_config import TrainingConfig
 import copy
 import torch
@@ -24,11 +26,12 @@ def run_training(
     :param data_loaders: dictionary of dataloaders
     """
     print(f"Training {training_name} on device: {device}")
-    training_config.create_tensorboard(training_name)
+    training_config.tb = utils.create_tensorboard(
+        training_name, training_config.overwrite_previous
+    )
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
-
     global_step = 0
 
     if torch.cuda.is_available():
@@ -65,10 +68,10 @@ def run_training(
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         outputs = training_config.net(inputs)
-                        loss = training_config.dice_loss(outputs, labels)
+                        loss = utils.dice_loss(outputs, labels)
 
                         metrics["loss"] += loss.item() * inputs.size(0)
-                        training_config.calc_metrics(outputs, labels, metrics)
+                        utils.calc_metrics(outputs, labels, metrics)
 
                         # backward + optimize only if in training phase
                         if phase == "train":
@@ -81,7 +84,9 @@ def run_training(
                     global_step += 1
                     pbar.set_postfix(**{"loss (batch)": loss.item()})
 
-            training_config.print_metrics(metrics, epoch_samples, phase, epoch)
+            utils.print_metrics(
+                training_config.tb, metrics, epoch_samples, phase, epoch
+            )
             epoch_loss = metrics["loss"] / epoch_samples
 
             if phase == "val":
@@ -100,6 +105,6 @@ def run_training(
 
     # load best model weights
     training_config.net.load_state_dict(best_model_wts)
-    training_config.close_tensorboard()
+    utils.close_tensorboard(training_config.tb)
     # save model
-    training_config.save_model(training_name)
+    utils.save_model(training_config.net, training_name)
