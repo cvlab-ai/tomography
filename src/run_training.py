@@ -27,6 +27,7 @@ def training_arg_parser() -> argparse.Namespace:
     )
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
+    parser.add_argument("name", type=str, help="name of training")
     parser.add_argument(
         "experiment",
         type=str,
@@ -48,10 +49,10 @@ def main():
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
-    name = args.experiment
+    name = args.name
     config = config_factory(
         ConfigMode.TRAIN,
-        name,
+        args.experimant,
         args.batch_size,
         args.epochs,
         args.learning_rate,
@@ -77,7 +78,7 @@ def main():
     for i, fold_data_loaders in enumerate(folds_data_loaders):
         if i == args.fold:
             run_training(
-                f"{name}-fold-{i}-loss-{args.learning_rate}-window-{args.window_learning_rate}",
+                name,
                 config,
                 device,
                 fold_data_loaders,
