@@ -35,6 +35,7 @@ def training_arg_parser() -> argparse.Namespace:
         help="Experimenal layer",
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
     )
+    parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
     parser.add_argument(
         "-o", action="store_true", help="Overwrite previous trainings dirs"
     )
@@ -54,7 +55,14 @@ def main():
     # U-net
     name = args.experiment
     config = config_factory(
-        ConfigMode.TRAIN, name, args.o, args.batch_size, args.epochs, args.learning_rate
+        ConfigMode.TRAIN,
+        name,
+        args.o,
+        args.batch_size,
+        args.epochs,
+        args.learning_rate,
+        args.window_learning_rate,
+        args.use_batch_norm,
     )
     print(f"Running {args.experiment}")
 

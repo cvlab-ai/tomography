@@ -24,6 +24,7 @@ class TrainingConfig:
         epochs: int,
         learning_rate: float,
         window_learning_rate: float,
+        use_batch_norm: bool,
     ):
         # Batch size for training
         self.batch_size: int = batch_size
@@ -49,6 +50,7 @@ class TrainingConfig:
             n_channels=self.channels,
             n_classes=self.classes,
             window_layer=custom_layer,
+            use_batchnorm=use_batch_norm,
         ).float()
         print(self.net)
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=True)

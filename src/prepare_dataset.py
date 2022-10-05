@@ -14,7 +14,7 @@ from data_loader import TomographyDataset
 import pydicom
 
 
-def get_all_files(dir_path, ext="") -> List[str]:
+def get_all_files(dir_path: str, ext: str = "") -> List[str]:
     """
     Get list of all files in directory recursively
     """
