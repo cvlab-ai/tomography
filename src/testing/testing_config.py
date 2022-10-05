@@ -16,9 +16,7 @@ from datetime import datetime
 
 
 class TestingConfig:
-    def __init__(
-        self, custom_layer: Optional[nn.Module], overwrite: bool, batch_size: int
-    ):
+    def __init__(self, custom_layer: Optional[nn.Module], batch_size: int):
         # Batch size for training
         self.batch_size: int = batch_size
 
@@ -34,5 +32,4 @@ class TestingConfig:
             window_layer=custom_layer,
         ).float()
 
-        self.overwrite_previous = overwrite
         self.tb: Optional[SummaryWriter] = None

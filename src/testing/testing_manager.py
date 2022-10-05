@@ -25,9 +25,7 @@ def run_test(
     """
     test_name = weights_filename + "_test"
     print(f"Testing {weights_filename} on device: {device}")
-    testing_config.tb = utils.create_tensorboard(
-        test_name, testing_config.overwrite_previous
-    )
+    testing_config.tb = utils.create_tensorboard(test_name)
     testing_config.net.load_state_dict(torch.load(weights_filename))
 
     if torch.cuda.is_available():
@@ -50,7 +48,7 @@ def run_test(
                 outputs = testing_config.net(inputs)
                 loss = utils.dice_loss(outputs, labels)
                 metrics["loss"] += loss.item() * inputs.size(0)
-                utils.calc_metrics(outputs, labels, metrics)
+                utils.calc_metrics(outputs, labels, metrics, device)
 
                 test_samples += inputs.size(0)
                 pbar.update(inputs.size(0))

@@ -7,8 +7,6 @@ import torch
 import torch.multiprocessing as mp
 from src.config_factory import config_factory, ConfigMode
 
-overwrite_previous_trainings = False
-
 
 def training_arg_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -35,9 +33,6 @@ def training_arg_parser() -> argparse.Namespace:
         help="Experimenal layer",
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
     )
-    parser.add_argument(
-        "-o", action="store_true", help="Overwrite previous trainings dirs"
-    )
     return parser.parse_args()
 
 
@@ -54,13 +49,9 @@ def main():
     # U-net
     name = args.experiment
     config = config_factory(
-        ConfigMode.TRAIN, name, args.o, args.batch_size, args.epochs, args.learning_rate
+        ConfigMode.TRAIN, name, args.batch_size, args.epochs, args.learning_rate
     )
     print(f"Running {args.experiment}")
-
-    if args.o:
-        config.overwrite_previous_trainings = True
-        print("Overwriting previous trainings enabled")
 
     metadata = load_metadata(args.metadata)
 
