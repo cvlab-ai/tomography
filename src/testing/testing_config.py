@@ -1,4 +1,5 @@
 import shutil
+from typing import Optional
 
 import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
@@ -15,7 +16,9 @@ from datetime import datetime
 
 
 class TestingConfig:
-    def __init__(self, custom_layer: nn.Module, overwrite: bool, batch_size: int):
+    def __init__(
+        self, custom_layer: Optional[nn.Module], overwrite: bool, batch_size: int
+    ):
         # Batch size for training
         self.batch_size: int = batch_size
 
@@ -32,4 +35,4 @@ class TestingConfig:
         ).float()
 
         self.overwrite_previous = overwrite
-        self.tb = None
+        self.tb: Optional[SummaryWriter] = None

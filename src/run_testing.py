@@ -16,6 +16,11 @@ def test_arg_parser() -> argparse.Namespace:
     )
     parser.add_argument("batch_size", type=int, help="Batch size")
     parser.add_argument("gpu", type=int, help="GPU no")
+    parser.add_argument(
+        "img_size",
+        type=int,
+        help="Size of image, it should be lower than image width/height",
+    )
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
     parser.add_argument(
@@ -49,7 +54,7 @@ def main():
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
-    dataset = TomographyDataset(args.dataset, metadata)
+    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size)
 
     _, test = dataset.train_test_split(0.2)
     print(test)

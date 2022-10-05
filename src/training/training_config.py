@@ -1,6 +1,7 @@
 import shutil
-
+from typing import Optional
 import torchmetrics
+from torch.optim.optimizer import Optimizer
 from torch.utils.tensorboard import SummaryWriter
 
 from src.models.unet import UNet  # type: ignore
@@ -17,7 +18,7 @@ from datetime import datetime
 class TrainingConfig:
     def __init__(
         self,
-        custom_layer: nn.Module,
+        custom_layer: Optional[nn.Module],
         overwrite: bool,
         batch_size: int,
         epochs: int,
@@ -51,12 +52,13 @@ class TrainingConfig:
         ).float()
         print(self.net)
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=True)
-        if custom_layer is None:
-            self.optimizer = optim.Adam(
-                self.net.parameters(),
-                lr=self.learning_rate,
-            )
-        else:
+
+        self.optimizer: Optimizer = optim.Adam(
+            self.net.parameters(),
+            lr=self.learning_rate,
+        )
+
+        if custom_layer is not None:
             layer_name = "window_layer"
             params = list(
                 filter(lambda kv: layer_name in kv[0], self.net.named_parameters())
@@ -89,4 +91,4 @@ class TrainingConfig:
         self.loss = nn.CrossEntropyLoss()
 
         self.overwrite_previous = overwrite
-        self.tb = None
+        self.tb: Optional[SummaryWriter] = None

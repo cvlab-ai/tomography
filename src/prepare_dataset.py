@@ -1,3 +1,5 @@
+from pickle import UnpicklingError
+
 from tqdm import tqdm
 import argparse
 import nibabel as nib
@@ -12,11 +14,11 @@ from data_loader import TomographyDataset
 import pydicom
 
 
-def get_all_files(dir_path, ext=""):
+def get_all_files(dir_path, ext="") -> List[str]:
     """
     Get list of all files in directory recursively
     """
-    file_list = []
+    file_list: List[str] = []
     for root, dirs, files in os.walk(dir_path):
         for file in files:
             if file.endswith(ext):
@@ -85,7 +87,7 @@ def lits_metadata(processed_dataset_path):
 
 
 def prepare_lits_images(
-        dataset_path: str, output_path: str, labeled_patients: List[int]
+    dataset_path: str, output_path: str, labeled_patients: List[int]
 ) -> None:
     images_path = os.path.join(dataset_path, "imagesTr_gz")
     images_files = get_all_files(images_path, ".gz")
@@ -101,11 +103,13 @@ def prepare_lits_images(
         if patient_id in labeled_patients:
             try:
                 process_nifti(file, output_path, "images")
-            except EOFError as e:
+            except EOFError:
                 print(f"Error processing patient {patient_id} image")
                 # patient 43 WA
                 if patient_id == 43:
-                    wa43_path = os.path.join(os.getcwd(), "image_fix", "liver_43.nii.gz")
+                    wa43_path = os.path.join(
+                        os.getcwd(), "image_fix", "liver_43.nii.gz"
+                    )
                     print(f"Trying to load patient 43 image from {wa43_path}")
                     try:
                         process_nifti(wa43_path, output_path, "images")
@@ -184,9 +188,9 @@ def pg_metadata(processed_dataset_path):
 
     df["unqualified"] = df.apply(
         lambda row: row["p"] is False
-                    and row["v"] is False
-                    and row["m"] is False
-                    and row["vesicle"] is False,
+        and row["v"] is False
+        and row["m"] is False
+        and row["vesicle"] is False,
         axis=1,
     )
 
@@ -231,7 +235,7 @@ def prepare_pg_labels(dataset_path, output_path):
 
 
 def prepare_pg_images(
-        dataset_path: str, output_path: str, labeled_series: List[Tuple[int, int]]
+    dataset_path: str, output_path: str, labeled_series: List[Tuple[int, int]]
 ) -> None:
     images_path = os.path.join(dataset_path, "Liver3D_originals")
     images_files = get_all_files(images_path)
@@ -267,7 +271,7 @@ def prepare_pg_images(
             continue
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        ds = pydicom.read_file(file)
+        ds = pydicom.read_file(file)  # type: ignore
         img = ds.pixel_array.astype(float)
         npy_filename = f"slice_{slice_number}.npz"
         np.savez_compressed(os.path.join(save_dir, npy_filename), img)
@@ -294,8 +298,8 @@ def check_processed_dataset(processed_dataset_path):
     print("Verifying processed slices")
     for file in tqdm(files):
         try:
-            data = np.load(file)
-        except:
+            np.load(file)
+        except (OSError, UnpicklingError, ValueError):
             print(f"Error loading {file}")
 
 
@@ -304,13 +308,21 @@ check_files = False
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("dataset", type=str, choices=["lits", "pg"], help="Dataset to process")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "dataset", type=str, choices=["lits", "pg"], help="Dataset to process"
+    )
     parser.add_argument("input", type=str, help="Dataset input directory")
     parser.add_argument("output", type=str, help="Prepared dataset output directory")
-    parser.add_argument("-s", action='store_true', help="Skip processing existing images and "
-                                                        "labels (checks only if dir exists)")
-    parser.add_argument("-c", action='store_true', help="Test processed files loading")
+    parser.add_argument(
+        "-s",
+        action="store_true",
+        help="Skip processing existing images and "
+        "labels (checks only if dir exists)",
+    )
+    parser.add_argument("-c", action="store_true", help="Test processed files loading")
     args = parser.parse_args()
 
     if args.s:

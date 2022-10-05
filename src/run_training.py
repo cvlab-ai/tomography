@@ -22,6 +22,11 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument(
         "window_learning_rate", type=float, help="learning rate of window layer"
     )
+    parser.add_argument(
+        "img_size",
+        type=int,
+        help="Size of image, it should be lower than image width/height",
+    )
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
     parser.add_argument(
@@ -61,7 +66,7 @@ def main():
 
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
-    dataset = TomographyDataset(args.dataset, metadata)
+    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size)
 
     train, _ = dataset.train_test_split(0.2)
     folds = dataset.k_fold_split(train, k=config.k_folds)
