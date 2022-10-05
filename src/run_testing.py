@@ -7,8 +7,6 @@ import torch
 import torch.multiprocessing as mp
 from src.config_factory import config_factory, ConfigMode
 
-overwrite_previous_trainings = False
-
 
 def test_arg_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -30,9 +28,6 @@ def test_arg_parser() -> argparse.Namespace:
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
     )
     parser.add_argument("test", type=str, help="Test model")
-    parser.add_argument(
-        "-o", action="store_true", help="Overwrite previous trainings dirs"
-    )
 
     return parser.parse_args()
 

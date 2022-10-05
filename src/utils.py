@@ -6,20 +6,16 @@ from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 
 
-def create_tensorboard(log_dir: str, overwrite: bool) -> SummaryWriter:
+def create_tensorboard(log_dir: str) -> SummaryWriter:
     """
     Create the tensorboard object to use for logging.
-    :param overwrite: If true - rename previous training, if false - exit
     :param log_dir: Directory to store logs in
     """
     # Check if dir runs/name exists, if yes, print error and exit
     path = os.path.join("runs", log_dir)
     if os.path.exists(path):
         print("Training already exists")
-        if overwrite:
-            os.rename(path, path + datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
-        else:
-            exit()
+        exit()
     return SummaryWriter(f"runs/{log_dir}")
 
 
