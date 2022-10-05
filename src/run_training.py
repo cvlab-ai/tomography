@@ -27,13 +27,13 @@ def training_arg_parser() -> argparse.Namespace:
     )
     parser.add_argument("metadata", type=str, help="Metadata path")
     parser.add_argument("dataset", type=str, help="Dataset path")
-    parser.add_argument("name", type=str, help="name of training")
     parser.add_argument(
         "experiment",
         type=str,
         help="Experimenal layer",
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
     )
+    parser.add_argument("name", type=str, help="name of training")
     parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
     parser.add_argument("--tumor", action="store_true", help="Use tumor labels")
     return parser.parse_args()
@@ -66,7 +66,9 @@ def main():
 
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
-    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size, tumor=args.tumor)
+    dataset = TomographyDataset(
+        args.dataset, metadata, target_size=args.img_size, tumor=args.tumor
+    )
 
     train, _ = dataset.train_test_split(0.2)
     folds = dataset.k_fold_split(train, k=config.k_folds)

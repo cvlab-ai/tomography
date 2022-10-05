@@ -18,7 +18,7 @@ class TomographyDataset(Dataset):
         target_size=512,
         transform=None,
         target_transform=None,
-        tumor: bool = False
+        tumor=False,
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
