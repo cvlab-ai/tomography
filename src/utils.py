@@ -6,17 +6,19 @@ from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 
 
-def create_tensorboard(log_dir: str) -> SummaryWriter:
+def create_tensorboard(log_dir: str, log_name: str) -> SummaryWriter:
     """
     Create the tensorboard object to use for logging.
     :param log_dir: Directory to store logs in
+    :param log_name: Name of log
     """
     # Check if dir runs/name exists, if yes, print error and exit
-    path = os.path.join("runs", log_dir)
+
+    path = os.path.join("runs", log_dir, log_name)
     if os.path.exists(path):
         print("Training already exists")
         exit()
-    return SummaryWriter(f"runs/{log_dir}")
+    return SummaryWriter(path)
 
 
 def close_tensorboard(tb: SummaryWriter) -> None:

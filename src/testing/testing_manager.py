@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader
 
-
+from datetime import datetime
 import torch
 import src.utils as utils
 from collections import defaultdict
@@ -25,7 +25,10 @@ def run_test(
     """
     test_name = weights_filename + "_test"
     print(f"Testing {weights_filename} on device: {device}")
-    testing_config.tb = utils.create_tensorboard(test_name)
+    now = datetime.now()
+    date = now.strftime("%d_%m_%Y")
+    timestamp = datetime.now().strftime("%H_%M_%S")
+    testing_config.tb = utils.create_tensorboard(date, f"{test_name}_{timestamp}")
     testing_config.net.load_state_dict(torch.load(weights_filename))
 
     if torch.cuda.is_available():

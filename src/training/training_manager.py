@@ -28,9 +28,10 @@ def run_training(
     :param data_loaders: dictionary of dataloaders
     """
     print(f"Training {training_name} on device: {device}")
-    timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
-    training_config.tb = utils.create_tensorboard(f"{training_name}_{timestamp}")
+    now = datetime.now()
+    date = now.strftime("%d_%m_%Y")
+    timestamp = datetime.now().strftime("%H_%M_%S")
+    training_config.tb = utils.create_tensorboard(date, f"{training_name}_{timestamp}")
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
