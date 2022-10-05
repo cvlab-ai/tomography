@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from torch import optim
 from torch.utils.data import DataLoader
 
@@ -26,8 +28,10 @@ def run_training(
     :param data_loaders: dictionary of dataloaders
     """
     print(f"Training {training_name} on device: {device}")
+    timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+
     training_config.tb = utils.create_tensorboard(
-        training_name, training_config.overwrite_previous
+        f"{training_name}_{timestamp}", training_config.overwrite_previous
     )
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
