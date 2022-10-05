@@ -26,23 +26,17 @@ class WindowLayerHardTanH(nn.Module):
         """
         super().__init__()
 
-        center_grad = center is not None
-        width_grad = width is not None
-        center_init = 0 if center is None else center
-        width_init = 1 if width is None else width
-
         # initialize center and width with the given values
-        self.center = Parameter(torch.Tensor(1), requires_grad=center_grad)
-        torch.nn.init.constant(self.center, center_init)
-
-        self.width = Parameter(torch.Tensor(1), requires_grad=width_grad)
-        torch.nn.init.constant(self.center, width_init)
+        self.center = Parameter(torch.Tensor([center]), requires_grad=True)
+        self.width = Parameter(torch.Tensor([width]), requires_grad=True)
 
     def forward(self, x):
         """
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        lower_level = self.center - (self.width / 2)
-        upper_level = self.center + (self.width / 2)
-        return torch.clamp_(x, lower_level, upper_level)
+        return torch.clamp_(
+            x,
+            torch.sub(self.center, torch.div(self.width, 2)),
+            torch.add(self.center, torch.div(self.width, 2)),
+        )

@@ -42,7 +42,9 @@ class WindowLayerAdaptiveTanh(nn.Module):
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        lower_level = self.center - (self.width / 2)
-        upper_level = self.center + (self.width / 2)
-        y = torch.clamp_(x, lower_level, upper_level)
+        y = torch.clamp_(
+            x,
+            torch.sub(self.center, torch.div(self.width, 2)),
+            torch.add(self.center, torch.div(self.width, 2)),
+        )
         return nn.functional.tanh(y)
