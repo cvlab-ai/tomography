@@ -37,7 +37,6 @@ def get_layer(special_layer: str) -> Union[nn.Module, None]:
 def config_factory(
     mode: ConfigMode,
     special_layer: str,
-    overwrite: bool,
     batch_size: int,
     epochs: int = 50,
     learning_rate: float = 0.0001,
@@ -48,17 +47,17 @@ def config_factory(
     Returns config based on parameters
     :param mode: mode of the config
     :param special_layer: name of the special layer
-    :param overwrite: if true old training will be renamed
     :param batch_size: batch size for training
     :param epochs: number of epochs
     :param learning_rate: learning rate
+    :param window_learning_rate: learning rate for window layer
+    :param use_batch_norm: use batch norm
     :return:
     """
     layer = get_layer(special_layer)
     if mode == ConfigMode.TRAIN:
         return TrainingConfig(
             layer,
-            overwrite,
             batch_size,
             epochs,
             learning_rate,
@@ -66,5 +65,5 @@ def config_factory(
             use_batch_norm,
         )
     elif mode == ConfigMode.TEST:
-        return TestingConfig(layer, overwrite, batch_size)
+        return TestingConfig(layer, batch_size)
     raise ValueError("Invalid mode")

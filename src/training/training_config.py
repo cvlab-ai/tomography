@@ -19,7 +19,6 @@ class TrainingConfig:
     def __init__(
         self,
         custom_layer: Optional[nn.Module],
-        overwrite: bool,
         batch_size: int,
         epochs: int,
         learning_rate: float,
@@ -91,6 +90,4 @@ class TrainingConfig:
             threshold_mode="abs",
         )
         self.loss = nn.CrossEntropyLoss()
-
-        self.overwrite_previous = overwrite
         self.tb: Optional[SummaryWriter] = None

@@ -30,9 +30,7 @@ def run_training(
     print(f"Training {training_name} on device: {device}")
     timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 
-    training_config.tb = utils.create_tensorboard(
-        f"{training_name}_{timestamp}", training_config.overwrite_previous
-    )
+    training_config.tb = utils.create_tensorboard(f"{training_name}_{timestamp}")
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_loss = 1e10
