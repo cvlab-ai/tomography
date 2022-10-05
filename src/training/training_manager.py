@@ -71,7 +71,7 @@ def run_training(
                         loss = utils.dice_loss(outputs, labels)
 
                         metrics["loss"] += loss.item() * inputs.size(0)
-                        utils.calc_metrics(outputs, labels, metrics)
+                        utils.calc_metrics(outputs, labels, metrics, device)
 
                         # backward + optimize only if in training phase
                         if phase == "train":
