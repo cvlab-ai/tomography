@@ -58,7 +58,7 @@ def jsc(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 
 
 def calc_metrics(
-    pred: torch.Tensor, target: torch.Tensor, metrics: dict, device: str
+    pred: torch.Tensor, target: torch.Tensor, metrics: dict, device: torch.device
 ) -> None:
     dice_coeff_metric = Dice(average="micro", multiclass=True).to(device)
     dice = dice_coeff_metric(pred, target)

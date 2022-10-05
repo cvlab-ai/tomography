@@ -48,7 +48,7 @@ def run_test(
                 outputs = testing_config.net(inputs)
                 loss = utils.dice_loss(outputs, labels)
                 metrics["loss"] += loss.item() * inputs.size(0)
-                utils.calc_metrics(outputs, labels, metrics)
+                utils.calc_metrics(outputs, labels, metrics, device)
 
                 test_samples += inputs.size(0)
                 pbar.update(inputs.size(0))
