@@ -53,7 +53,7 @@ def main():
     name = args.name
     config = config_factory(
         ConfigMode.TRAIN,
-        args.experimant,
+        args.experiment,
         args.batch_size,
         args.epochs,
         args.learning_rate,
