@@ -1,6 +1,8 @@
 #!/usr/bin/bash
+source /home/macierz/s175573/tomography/tomography_venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:/home/macierz/s175573/tomography/tomography
 
-nohup python ./src/run_training.py -o 128 50 1 0 0.00005 0.00005 128 /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "adaptive_sigmoid" 2>mz_fix_test/normal_unet00005_00005.log 1>mz_fix_test/normal_unet00005_00005.err &
-nohup python ./src/run_training.py -o 128 50 2 0 0.00005 0.00005 128 /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 2>mz_fix_test/hard_tanh00005_00005.log 1>mz_fix_test/hard_tanh00005_00005.err &
-nohup python ./src/run_training.py -o 128 50 3 0 0.00005 0.00005 128 /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "adaptive_tanh" 2>mz_fix_test/adaptive_tanh00005_00005.log 1>mz_fix_test/adaptive_tanh00005_00005.err &
-nohup python ./src/run_training.py -o 128 50 4 0 0.00005 0.00005 128 /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "normal_unet" 2>mz_fix_test/normal_unet00005_00005.log 1>mz_fix_test/normal_unet00005_00005.err &
+nohup ./experiments/128_batch_liver_and_256_nobatch_tumor.sh &
+nohup ./experiments/128_batch_tumor_and_256_nobatch_liver.sh &
+nohup ./experiments/128_nobatch_liver_and_256_batch_tumor.sh &
+nohup ./experiments/128_nobatch_tumor_and_256_batch_liver.sh &
