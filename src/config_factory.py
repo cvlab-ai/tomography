@@ -65,5 +65,5 @@ def config_factory(
             use_batch_norm,
         )
     elif mode == ConfigMode.TEST:
-        return TestingConfig(layer, batch_size)
+        return TestingConfig(layer, batch_size, use_batch_norm)
     raise ValueError("Invalid mode")

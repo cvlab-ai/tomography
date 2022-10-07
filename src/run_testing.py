@@ -28,7 +28,7 @@ def test_arg_parser() -> argparse.Namespace:
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
     )
     parser.add_argument("test", type=str, help="Test model")
-
+    parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
     return parser.parse_args()
 
 
@@ -44,7 +44,9 @@ def main():
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
     name = args.experiment
     # U-net
-    config = config_factory(ConfigMode.TEST, name, args.test, args.batch_size)
+    config = config_factory(
+        ConfigMode.TEST, name, args.batch_size, use_batch_norm=args.use_batch_norm
+    )
     metadata = load_metadata(args.metadata)
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)

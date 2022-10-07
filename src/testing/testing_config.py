@@ -16,7 +16,9 @@ from datetime import datetime
 
 
 class TestingConfig:
-    def __init__(self, custom_layer: Optional[nn.Module], batch_size: int):
+    def __init__(
+        self, custom_layer: Optional[nn.Module], batch_size: int, use_batchnorm: bool
+    ):
         # Batch size for training
         self.batch_size: int = batch_size
 
@@ -30,6 +32,7 @@ class TestingConfig:
             n_channels=self.channels,
             n_classes=self.classes,
             window_layer=custom_layer,
+            use_batchnorm=use_batchnorm,
         ).float()
 
         self.tb: Optional[SummaryWriter] = None

@@ -49,8 +49,27 @@ def run_test(
                 labels = labels.to(device, dtype=torch.long)
 
                 outputs = testing_config.net(inputs)
+                # if it is first sample, save first image to tensorboard
+
                 loss = utils.dice_loss(outputs, labels)
                 metrics["loss"] += loss.item() * inputs.size(0)
+                if test_samples == 0:
+                    testing_config.tb.add_image(
+                        "inputs", inputs[0], 0, dataformats="CHW"
+                    )
+
+                    testing_config.tb.add_image(
+                        "labels", labels[0], 0, dataformats="CHW"
+                    )
+                    # If output value less than 0.5, set to 0, else set to 1
+                    output_tres = torch.where(
+                        outputs[0] < 0.5,
+                        torch.zeros_like(outputs[0]),
+                        torch.ones_like(outputs[0]),
+                    )
+                    testing_config.tb.add_image(
+                        "outputs", output_tres[0], 0, dataformats="HW"
+                    )
                 utils.calc_metrics(outputs, labels, metrics, device)
 
                 test_samples += inputs.size(0)
