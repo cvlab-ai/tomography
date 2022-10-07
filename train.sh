@@ -2,7 +2,29 @@
 source /home/macierz/s175573/tomography/tomography_venv/bin/activate
 export PYTHONPATH=$PYTHONPATH:/home/macierz/s175573/tomography/tomography
 
-nohup ./experiments/128_batch_liver_and_256_nobatch_tumor.sh &
-nohup ./experiments/128_batch_tumor_and_256_nobatch_liver.sh &
-nohup ./experiments/128_nobatch_liver_and_256_batch_tumor.sh &
-nohup ./experiments/128_nobatch_tumor_and_256_batch_liver.sh &
+nohup $( \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.6 150 30 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.6 2>logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.6.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.6.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.6 400 50 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.6 2>logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.6.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.6.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.6 4000 1000 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.6 2>logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.6.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.6.err;  \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.3 150 30 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.3 2>logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.3.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.3.err \
+       ) &
+
+nohup $( \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.3 400 50 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.3 2>logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.3.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.3.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.3 4000 1000 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.3 2>logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.3.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.3.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.1 150 30 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.1 2>logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.1.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.1.err;  \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.1 400 50 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.1 2>logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.1.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.1.err \
+       ) &
+
+nohup $( \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.1 4000 1000 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.1 2>logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.1.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.1.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.05 150 30 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.05 2>logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.05.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.05.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.05 400 50 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.05 2>logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.05.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.05.err;  \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.05 4000 1000 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.05 2>logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.05.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.05.err \
+       ) &
+
+nohup $( \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.01 150 30 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.01 2>logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.01.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-150_wc-30_wlr-0.01.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.01 400 50 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.01 2>logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.01.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-400_wc-50_wlr-0.01.err; \
+        python ./src/run_testing.py --use_batch_norm --tumor 64 50 gpu 0 0.00005 0.01 4000 1000 img_size /home/macierz/s175573/tomography/lits_prepared/metadata.csv /home/macierz/s175573/tomography/lits_prepared "hard_tanh" 256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.01 2>logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.01.log 1>test_logs/logs/256_batch_tumor_hard_tanh_ww-4000_wc-1000_wlr-0.01.err \
+       ) &
