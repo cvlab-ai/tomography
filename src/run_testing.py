@@ -29,6 +29,7 @@ def test_arg_parser() -> argparse.Namespace:
     )
     parser.add_argument("test", type=str, help="Test model")
     parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
+    parser.add_argument("--tumor", action="store_true", help="Use tumor labels")
     return parser.parse_args()
 
 
@@ -51,7 +52,7 @@ def main():
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
-    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size)
+    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size, tumor=args.tumor)
 
     _, test = dataset.train_test_split(0.2)
     print(test)
