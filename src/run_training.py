@@ -2,6 +2,7 @@ import argparse
 
 from src.data_loader import TomographyDataset
 from src.prepare_dataset import load_metadata
+from src.testing.testing_manager import run_test
 from training.training_manager import run_training
 import torch
 import torch.multiprocessing as mp
@@ -20,6 +21,8 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument(
         "window_learning_rate", type=float, help="learning rate of window layer"
     )
+    parser.add_argument("window_width", type=int, help="width of window layer")
+    parser.add_argument("window_center", type=int, help="center of window layer")
     parser.add_argument(
         "img_size",
         type=int,
@@ -59,6 +62,8 @@ def main():
         args.learning_rate,
         args.window_learning_rate,
         args.use_batch_norm,
+        args.window_width,
+        args.window_center,
     )
     print(f"Running {args.experiment}")
 
@@ -70,7 +75,7 @@ def main():
         args.dataset, metadata, target_size=args.img_size, tumor=args.tumor
     )
 
-    train, _ = dataset.train_test_split(0.2)
+    train, test = dataset.train_test_split(0.2)
     folds = dataset.k_fold_split(train, k=config.k_folds)
     print(folds)
 
@@ -86,6 +91,14 @@ def main():
                 device,
                 fold_data_loaders,
             )
+    test_config = config_factory(
+        ConfigMode.TEST,
+        args.experiment,
+        args.batch_size,
+        use_batch_norm=args.use_batch_norm,
+    )
+    test_dataset = dataset.create_data_loader(test, config.batch_size)
+    run_test(name, test_config, device, test_dataset)
 
 
 if __name__ == "__main__":

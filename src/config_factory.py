@@ -19,18 +19,20 @@ class ConfigMode(Enum):
     TEST = 2
 
 
-def get_layer(special_layer: str) -> Union[nn.Module, None]:
+def get_layer(
+    special_layer: str, window_width: int, window_center: int
+) -> Union[nn.Module, None]:
     """
     Returns layer based on special_layer string
     :param special_layer: name of the layer
     :return: layer object
     """
     if special_layer == "adaptive_sigmoid":
-        return WindowLayerAdaptiveSigmoid()
+        return WindowLayerAdaptiveSigmoid(window_center, window_width)
     elif special_layer == "adaptive_tanh":
-        return WindowLayerAdaptiveTanh()
+        return WindowLayerAdaptiveTanh(window_center, window_width)
     elif special_layer == "hard_tanh":
-        return WindowLayerHardTanH()
+        return WindowLayerHardTanH(window_center, window_width)
     return None
 
 
@@ -42,6 +44,8 @@ def config_factory(
     learning_rate: float = 0.0001,
     window_learning_rate: float = 0.0001,
     use_batch_norm: bool = True,
+    window_width: int = 0,
+    window_center: int = 0,
 ) -> Union[TrainingConfig, TestingConfig]:
     """
     Returns config based on parameters
@@ -54,7 +58,7 @@ def config_factory(
     :param use_batch_norm: use batch norm
     :return:
     """
-    layer = get_layer(special_layer)
+    layer = get_layer(special_layer, window_width, window_center)
     if mode == ConfigMode.TRAIN:
         return TrainingConfig(
             layer,
