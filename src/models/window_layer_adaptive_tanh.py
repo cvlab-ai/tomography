@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
 
+from src.utils import norm_point, torch_renorm
+
 
 class WindowLayerAdaptiveTanh(nn.Module):
     """
@@ -25,26 +27,16 @@ class WindowLayerAdaptiveTanh(nn.Module):
         """
         super().__init__()
 
-        center_grad = center is not None
-        width_grad = width is not None
-        center_init = 0 if center is None else center
-        width_init = 1 if width is None else width
-
+        center = norm_point(center)
+        width = norm_point(width)
         # initialize center and width with the given values
-        self.center = Parameter(torch.Tensor(1), requires_grad=center_grad)
-        torch.nn.init.constant(self.center, center_init)
-
-        self.width = Parameter(torch.Tensor(1), requires_grad=width_grad)
-        torch.nn.init.constant(self.center, width_init)
+        self.center = Parameter(torch.Tensor([center]), requires_grad=True)
+        self.width = Parameter(torch.Tensor([width]), requires_grad=True)
 
     def forward(self, x):
         """
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        y = torch.clamp_(
-            x,
-            torch.sub(self.center, torch.div(self.width, 2)),
-            torch.add(self.center, torch.div(self.width, 2)),
-        )
-        return nn.functional.tanh(y)
+
+        return nn.functional.tanh(torch_renorm(x, self.width, self.center))

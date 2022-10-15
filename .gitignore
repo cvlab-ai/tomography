@@ -8,3 +8,4 @@ docs/build
 src/runs
 src/image_fix
 src/label_fix
+*/__pycache__/

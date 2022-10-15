@@ -9,6 +9,8 @@ from sklearn.model_selection import KFold
 from typing import Dict, Tuple
 from scipy.ndimage import convolve
 
+from src.utils import norm_point
+
 
 class TomographyDataset(Dataset):
     def __init__(
@@ -19,6 +21,7 @@ class TomographyDataset(Dataset):
         transform=None,
         target_transform=None,
         tumor=False,
+        normalize=False
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
@@ -31,6 +34,7 @@ class TomographyDataset(Dataset):
         self.target_transform = target_transform
 
         self.label_map_value = 2.0 if tumor is True else 1.0
+        self.normalize = normalize
 
     def __len__(self):
         return len(self.metadata)
@@ -57,6 +61,9 @@ class TomographyDataset(Dataset):
             # check if label valuesare binary, if not, make them binary
             label = np.where(label_sampled > 0.5, 1, 0)
 
+        if self.normalize:
+            # Assuming that values are in range [-1024,4096], normalize to [-1,1]
+            norm_point(image)
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

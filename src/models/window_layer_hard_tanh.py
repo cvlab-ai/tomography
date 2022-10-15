@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Parameter
 
+from src.utils import norm_point, torch_renorm
+
 
 class WindowLayerHardTanH(nn.Module):
     """
@@ -26,6 +28,8 @@ class WindowLayerHardTanH(nn.Module):
         """
         super().__init__()
 
+        center = norm_point(center)
+        width = norm_point(width)
         # initialize center and width with the given values
         self.center = Parameter(torch.Tensor([center]), requires_grad=True)
         self.width = Parameter(torch.Tensor([width]), requires_grad=True)
@@ -36,7 +40,7 @@ class WindowLayerHardTanH(nn.Module):
         Applies the function to the input elementwise.
         """
         return torch.clamp_(
-            x,
-            torch.sub(self.center, torch.div(self.width, 2)),
-            torch.add(self.center, torch.div(self.width, 2)),
+            torch_renorm(x, self.width, self.center),
+            -1,
+            1,
         )

@@ -93,3 +93,12 @@ def save_model(net: nn.Module, name: str) -> None:
     Save the model to disk.
     """
     torch.save(net.state_dict(), name)
+
+
+def norm_point(point):
+    return (point + 1024) / 2560 - 1
+
+
+def torch_renorm(x, width, center):
+    width_back = torch.sub(torch.mul(torch.add(width, 1), 2560), 1024)
+    return torch.div(torch.sub(x, center), torch.div(width_back, 5120))
