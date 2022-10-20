@@ -21,7 +21,7 @@ class TomographyDataset(Dataset):
         transform=None,
         target_transform=None,
         tumor=False,
-        normalize=False
+        normalize=False,
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
@@ -63,7 +63,7 @@ class TomographyDataset(Dataset):
 
         if self.normalize:
             # Assuming that values are in range [-1024,4096], normalize to [-1,1]
-            norm_point(image)
+            image = norm_point(image)
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
