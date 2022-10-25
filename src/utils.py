@@ -59,6 +59,27 @@ def jsc(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     return (intersection + smooth) / (iflat.sum() + tflat.sum() - intersection + smooth)
 
 
+def multi_label_dice(
+    preds: torch.Tensor,
+    targets: torch.Tensor,
+    device: torch.device,
+    num_of_classes: int,
+) -> float:
+    """
+    Calculate the dice score for a batch of images.
+    :param preds: Batch of predicted masks
+    :param targets: Batch of target masks
+    :param device: device str
+    :param num_of_classes: number of classes
+    :return: Dice score, mean of all classes
+    """
+    dice_score = 0
+    dice = Dice().to(device)
+    for i in range(num_of_classes):
+        dice_score += dice(preds[:, i], targets[:, i]).item()
+    return dice_score / num_of_classes
+
+
 def calc_metrics(
     pred: torch.Tensor, target: torch.Tensor, metrics: dict, device: torch.device
 ) -> None:
