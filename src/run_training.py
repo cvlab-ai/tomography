@@ -1,5 +1,7 @@
 import argparse
 
+import numpy as np
+
 from src.data_loader import TomographyDataset
 from src.prepare_dataset import load_metadata
 from src.testing.testing_manager import run_test
@@ -82,7 +84,11 @@ def main():
 
     train, test = dataset.train_test_split(0.2)
     folds = dataset.k_fold_split(train, k=config.k_folds)
-    print(folds)
+
+    tmp = np.array(folds[0]['val'])
+    folds[0]['val'] = test.tolist()
+    test = tmp
+
 
     folds_data_loaders = dataset.create_k_fold_data_loaders(
         folds, batch_size=config.batch_size
