@@ -25,6 +25,7 @@ class TomographyDataset(Dataset):
         tumor=False,
         normalize=False,
         discard=False,
+        multiclass=False,
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
@@ -44,6 +45,7 @@ class TomographyDataset(Dataset):
         self.target_transform = target_transform
 
         self.label_map_value = 2.0 if tumor is True else 1.0
+        self.multiclass = multiclass
         self.normalize = normalize
 
     def __len__(self):
@@ -59,8 +61,19 @@ class TomographyDataset(Dataset):
         )["arr_0"]
         label = np.reshape(label, (1, label.shape[0], label.shape[1]))
 
-        label_map = np.vectorize(lambda x: 1.0 if x >= self.label_map_value else 0.0)
-        label[0] = label_map(label[0])
+        #
+        if self.multiclass:
+            # Duplicate label map to create 3 channel label map
+            label = np.repeat(label, 3, axis=0)
+            # In first channel, sets 0 to 1, 1 to 0, 2 to 0
+            label[0, :, :] = np.where(label[0, :, :] == 0, 1, 0)
+            # In second channel, sets 0 to 0, 1 to 1, 2 to 0
+            label[1, :, :] = np.where(label[1, :, :] == 1, 1, 0)
+            # In third channel, sets 0 to 0, 1 to 0, 2 to 1
+            label[2, :, :] = np.where(label[2, :, :] == 2, 1, 0)
+
+        else:
+            label = np.where(label >= self.label_map_value, 1, 0)
 
         if self.target_size != image.shape[1]:
             factor = int(image.shape[1] / self.target_size)

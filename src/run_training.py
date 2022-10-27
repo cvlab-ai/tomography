@@ -48,6 +48,7 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument(
         "--discard", action="store_true", help="Discard images with 100% background"
     )
+    parser.add_argument("--multiclass", action="store_true", help="Use multiclass")
     return parser.parse_args()
 
 
@@ -59,6 +60,7 @@ def main():
         print("CUDA is available")
     else:
         print("CUDA is not available")
+
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
@@ -73,6 +75,7 @@ def main():
         args.use_batch_norm,
         args.window_width,
         args.window_center,
+        args.multiclass,
     )
     print(f"Running {args.experiment}")
 
@@ -87,6 +90,7 @@ def main():
         tumor=args.tumor,
         normalize=args.normalize,
         discard=args.discard,
+        multiclass=args.multiclass,
     )
 
     folds, test = dataset.train_val_test_k_fold(0.2)

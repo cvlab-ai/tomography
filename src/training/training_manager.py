@@ -45,7 +45,7 @@ def run_training(
         print("-" * 10)
 
         since = time.time()
-
+        loss = utils.DiceLoss(ignore_index=0).to(device)
         # Each epoch has a training and validation phase
         for phase in ["train", "val"]:
             if phase == "train":
@@ -71,10 +71,12 @@ def run_training(
                     # track history if only in train
                     with torch.set_grad_enabled(phase == "train"):
                         outputs = training_config.net(inputs)
-                        loss = utils.dice_loss(outputs, labels)
+                        loss_value = loss(outputs, labels)
 
-                        metrics["loss"] += loss.item() * inputs.size(0)
-                        utils.calc_metrics(outputs, labels, metrics, device)
+                        metrics["loss"] += loss_value.item() * inputs.size(0)
+                        utils.calc_metrics(
+                            outputs, labels, metrics, device, training_config.classes
+                        )
 
                         # backward + optimize only if in training phase
                         if phase == "train":
