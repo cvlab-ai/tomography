@@ -45,7 +45,10 @@ def run_training(
         print("-" * 10)
 
         since = time.time()
-        loss = utils.DiceLoss(ignore_index=0).to(device)
+        if training_config.classes > 1:
+            loss = utils.DiceLoss(ignore_index=0).to(device)
+        else:
+            loss = utils.DiceLoss().to(device)
         # Each epoch has a training and validation phase
         for phase in ["train", "val"]:
             if phase == "train":

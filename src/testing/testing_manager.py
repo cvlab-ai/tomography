@@ -38,7 +38,10 @@ def run_test(
         testing_config.net.eval()  # Set model to evaluate mode
         metrics: dict = defaultdict(float)
         test_samples = 0
-        loss = utils.DiceLoss(ignore_index=0).to(device)
+        if testing_config.classes > 1:
+            loss = utils.DiceLoss(ignore_index=0).to(device)
+        else:
+            loss = utils.DiceLoss().to(device)
         with tqdm(
             total=len(data_loader) * testing_config.batch_size,
             desc=f"Testing {weights_filename}",

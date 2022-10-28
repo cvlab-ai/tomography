@@ -53,14 +53,17 @@ def calc_metrics(
     device: torch.device,
     num_of_classes: int,
 ) -> None:
-    dice_score = torch.Tensor(0).to(device)
+    dice_score = 0
     dice_coeff_metric = Dice().to(device)
     for i in range(num_of_classes):
         # Ignore background
         if num_of_classes > 1 and i == 0:
             continue
-        dice_score += dice_coeff_metric(pred[:, i], target[:, i])
-    metrics["dice"] += dice_score.item() * target.size(0)
+        elif num_of_classes == 1:
+            dice_score = dice_coeff_metric(pred, target)
+        else:
+            dice_score += dice_coeff_metric(pred[:, i], target[:, i])
+    metrics["dice"] += dice_score.item() * target.size(0)  # type: ignore
 
 
 def print_metrics(
@@ -177,4 +180,4 @@ class DiceLoss(nn.Module):
                     dice_loss *= self.weights[i]
                 total_loss += dice_loss
 
-        return total_loss / target.shape[1]
+        return total_loss / (target.shape[1] - (0 if self.ignore_index is None else 1))
