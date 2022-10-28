@@ -118,6 +118,7 @@ def main():
         args.experiment,
         args.batch_size,
         use_batch_norm=args.use_batch_norm,
+        multiclass=args.multiclass,
     )
     test_dataset = dataset.create_data_loader(test, config.batch_size)
     run_test(name, test_config, device, test_dataset)

@@ -80,7 +80,7 @@ def run_training(
 
                         # backward + optimize only if in training phase
                         if phase == "train":
-                            loss.backward()
+                            loss_value.backward()
                             training_config.optimizer.step()
 
                     if training_config.net.window_layer is not None:
@@ -98,7 +98,7 @@ def run_training(
                     epoch_samples += inputs.size(0)
                     pbar.update(inputs.size(0))
                     global_step += 1
-                    pbar.set_postfix(**{"loss (batch)": loss.item()})
+                    pbar.set_postfix(**{"loss (batch)": loss_value.item()})
 
             utils.print_metrics(
                 training_config.tb, metrics, epoch_samples, phase, epoch

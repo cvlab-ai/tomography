@@ -76,7 +76,7 @@ def run_test(
 
                 test_samples += inputs.size(0)
                 pbar.update(inputs.size(0))
-                pbar.set_postfix(**{"loss (batch)": loss.item()})
+                pbar.set_postfix(**{"loss (batch)": loss_value.item()})
 
         utils.print_metrics(testing_config.tb, metrics, test_samples, "test", 0)
         utils.close_tensorboard(testing_config.tb)
