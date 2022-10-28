@@ -91,8 +91,8 @@ def main():
     )
 
     if args.val_test_switch:
-        tmp = np.array(folds[0]['val'])
-        folds[0]['val'] = test.tolist()
+        tmp = folds[0]['val']
+        folds[0]['val'] = test
         test = tmp
 
     for i, fold_data_loaders in enumerate(folds_data_loaders):
