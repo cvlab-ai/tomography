@@ -80,8 +80,7 @@ def main():
         normalize=args.normalize,
     )
 
-    train, test = dataset.train_test_split(0.2)
-    folds = dataset.k_fold_split(train, k=config.k_folds)
+    folds, test = dataset.train_val_test_k_fold(0.2)
     print(folds)
 
     folds_data_loaders = dataset.create_k_fold_data_loaders(
