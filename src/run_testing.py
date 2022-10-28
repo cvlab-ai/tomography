@@ -52,7 +52,9 @@ def main():
     print(metadata)
     metadata.drop("series_id", axis=1, inplace=True)
     metadata = metadata.to_numpy()
-    dataset = TomographyDataset(args.dataset, metadata, target_size=args.img_size, tumor=args.tumor)
+    dataset = TomographyDataset(
+        args.dataset, metadata, target_size=args.img_size, tumor=args.tumor
+    )
 
     _, test = dataset.train_test_split(0.2)
     print(test)

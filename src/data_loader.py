@@ -56,7 +56,7 @@ class TomographyDataset(Dataset):
 
         if self.target_size != image.shape[1]:
             factor = int(image.shape[1] / self.target_size)
-            filter = np.ones((1, factor, factor)) / (factor ** 2)
+            filter = np.ones((1, factor, factor)) / (factor**2)
             # reshape all images and labels to target size using downscaling
             image = convolve(image, filter)[:, 0::factor, 0::factor]
             label_sampled = convolve(label, filter)[:, 0::factor, 0::factor]
@@ -73,7 +73,9 @@ class TomographyDataset(Dataset):
 
         return image, label
 
-    def train_val_test_k_fold(self, test_ratio: float, k: int = 5, seed: int = 42) -> Tuple[list, list]:
+    def train_val_test_k_fold(
+        self, test_ratio: float, k: int = 5, seed: int = 42
+    ) -> Tuple[list, list]:
         """
         Split the dataset into train and test set by patient ids.
         :param test_ratio: float, ratio of test set size to whole dataset size
@@ -87,13 +89,18 @@ class TomographyDataset(Dataset):
         # lambda r: 0 if r['tumor_percent'] == 0 else np.rint(-np.log10(r['tumor_percent']
         metadata = pd.DataFrame(self.metadata)
         patients = pd.DataFrame()
-        patients['patient_id'] = metadata[1]
-        patients['tumor_percent'] = metadata[6]
-        patients = patients.groupby('patient_id').mean()
+        patients["patient_id"] = metadata[1]
+        patients["tumor_percent"] = metadata[6]
+        patients = patients.groupby("patient_id").mean()
         print(patients)
-        patients['tumor_magnitude'] = patients.apply(lambda r: 0 if r['tumor_percent'] == 0 else int(np.rint(-np.log10(r['tumor_percent']))), axis=1)
+        patients["tumor_magnitude"] = patients.apply(
+            lambda r: 0
+            if r["tumor_percent"] == 0
+            else int(np.rint(-np.log10(r["tumor_percent"]))),
+            axis=1,
+        )
         patient_ids = patients.index.values.tolist()
-        tumor_classes = patients['tumor_magnitude'].tolist()
+        tumor_classes = patients["tumor_magnitude"].tolist()
 
         np.random.seed(seed)
 
@@ -101,15 +108,19 @@ class TomographyDataset(Dataset):
         old_patients = np.unique(self.metadata[:, 1])
         np.random.shuffle(old_patients)
 
-        train, test = train_test_split(patient_ids, stratify=tumor_classes, random_state=seed, test_size=test_ratio)
+        train, test = train_test_split(
+            patient_ids, stratify=tumor_classes, random_state=seed, test_size=test_ratio
+        )
 
         train_patients = patients.iloc[train]
         patient_ids = train_patients.index.values.tolist()
-        tumor_classes = train_patients['tumor_magnitude'].tolist()
+        tumor_classes = train_patients["tumor_magnitude"].tolist()
 
         folds = []
         kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
-        for _, (train_idx, val_patient_idx) in enumerate(kf.split(patient_ids, tumor_classes)):
+        for _, (train_idx, val_patient_idx) in enumerate(
+            kf.split(patient_ids, tumor_classes)
+        ):
             fold_dict = {"train": list(train_idx), "val": list(val_patient_idx)}
             folds.append(fold_dict)
 
