@@ -1,14 +1,16 @@
 import os.path
 
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler, Sampler
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from typing import Dict, Tuple
 from scipy.ndimage import convolve
-
+from collections import Counter
 from src.utils import norm_point
 
 
@@ -22,9 +24,17 @@ class TomographyDataset(Dataset):
         target_transform=None,
         tumor=False,
         normalize=False,
+        discard=False,
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
+
+        # Remove slices with only background
+        if discard:
+            self.metadata = np.delete(
+                self.metadata, np.where(self.metadata[:, 4] == 1.0), axis=0
+            )
+
         self.metadata[:, 2] = self.metadata[:, 2].astype(np.string_)
         self.metadata[:, 3] = self.metadata[:, 3].astype(np.string_)
 
@@ -54,7 +64,7 @@ class TomographyDataset(Dataset):
 
         if self.target_size != image.shape[1]:
             factor = int(image.shape[1] / self.target_size)
-            filter = np.ones((1, factor, factor)) / (factor ** 2)
+            filter = np.ones((1, factor, factor)) / (factor**2)
             # reshape all images and labels to target size using downscaling
             image = convolve(image, filter)[:, 0::factor, 0::factor]
             label_sampled = convolve(label, filter)[:, 0::factor, 0::factor]
@@ -71,43 +81,67 @@ class TomographyDataset(Dataset):
 
         return image, label
 
-    def train_test_split(self, test_ratio: float, seed: int = 42) -> Tuple[list, list]:
+    def train_val_test_k_fold(
+        self, test_ratio: float, k: int = 5, seed: int = 42
+    ) -> Tuple[list, list]:
         """
         Split the dataset into train and test set by patient ids.
         :param test_ratio: float, ratio of test set size to whole dataset size
+        :param k: folds number
         :param seed: int, seed for random state
         :return: train - list of train slice indexes, test - list of test slice indexes
         """
         np.random.seed(seed)
 
         # Get all patient ids, patient id has 1 index in np array
-        patients = np.unique(self.metadata[:, 1])
-        np.random.shuffle(patients)
-
-        test_size = int(len(patients) * test_ratio)
-        test = patients[:test_size]
-        train = patients[test_size:]
-
-        return train, test
-
-    def k_fold_split(self, ids: list, k: int, seed: int = 42) -> list:
-        """
-        Split input patient_id list into and k train-val folds.
-        :param ids:
-        :param test_ratio:
-        :param k:
-        :param seed:
-        :return:
-        """
+        # lambda r: 0 if r['tumor_percent'] == 0 else np.rint(-np.log10(r['tumor_percent']
+        metadata = pd.DataFrame(self.metadata)
+        patients = pd.DataFrame()
+        patients["patient_id"] = metadata[1]
+        patients["tumor_percent"] = metadata[6]
+        patients = patients.groupby("patient_id").mean()
+        print(patients)
+        patients["tumor_magnitude"] = patients.apply(
+            lambda r: 0
+            if r["tumor_percent"] == 0
+            else int(np.rint(-np.log10(r["tumor_percent"]))),
+            axis=1,
+        )
+        patient_ids = patients.index.values.tolist()
+        tumor_classes = patients["tumor_magnitude"].tolist()
+        # Count number of each tumor class
+        tumor_classes_count: Dict[int, int] = Counter(tumor_classes)
+        # if there is <5 elements in any class, then decrease k
+        for key, value in tumor_classes_count.items():
+            if value < 5:
+                tumor_classes[:] = [x - 1 if x == key else x for x in tumor_classes]
         np.random.seed(seed)
 
+        # Get all patient ids, patient id has 1 index in np array
+        old_patients = np.unique(self.metadata[:, 1])
+        np.random.shuffle(old_patients)
+
+        train, test = train_test_split(
+            patient_ids, stratify=tumor_classes, random_state=seed, test_size=test_ratio
+        )
+
+        train_patients = patients.iloc[train]
+        patient_ids = train_patients.index.values.tolist()
+        tumor_classes = train_patients["tumor_magnitude"].tolist()
+
         folds = []
-        kf = KFold(n_splits=k, shuffle=True, random_state=seed)
-        for _, (train_idx, val_patient_idx) in enumerate(kf.split(ids)):
-            fold_dict = {"train": list(train_idx), "val": list(val_patient_idx)}
+        kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
+        for (train_idx, val_patient_idx) in kf.split(patient_ids, tumor_classes):
+            val_patients = [patient_ids[i] for i in val_patient_idx]
+            train_patients = [patient_ids[i] for i in train_idx]
+            fold_dict = {"train": list(train_patients), "val": list(val_patients)}
             folds.append(fold_dict)
 
-        return folds
+        # print(f'train:\t{len(patients.iloc[folds[0]["train"]])}\t{patients.iloc[folds[0]["train"]]["tumor_percent"].mean()}')
+        # print(f'val:\t{len(patients.iloc[folds[0]["val"]])}\t{patients.iloc[folds[0]["val"]]["tumor_percent"].mean()}')
+        # print(f'test:\t{len(patients.iloc[test])}\t{patients.iloc[test]["tumor_percent"].mean()}')
+
+        return folds, test
 
     def create_k_fold_data_loaders(self, folds, batch_size):
         folds_data_loaders = []
