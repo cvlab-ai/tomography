@@ -9,6 +9,7 @@ from training.training_manager import run_training
 import torch
 import torch.multiprocessing as mp
 from src.config_factory import config_factory, ConfigMode
+import torchmetrics
 
 
 def training_arg_parser() -> argparse.Namespace:

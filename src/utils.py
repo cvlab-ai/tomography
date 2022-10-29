@@ -63,7 +63,7 @@ def calc_metrics(
             dice_score = dice_coeff_metric(pred, target)
         else:
             dice_score += dice_coeff_metric(pred[:, i], target[:, i])
-    metrics["dice"] += dice_score.item() * target.size(0)  # type: ignore
+    metrics["dice"] += (dice_score.item() / (num_of_classes - 1)) * target.size(0)  # type: ignore
 
 
 def print_metrics(
