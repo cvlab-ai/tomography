@@ -64,7 +64,7 @@ class TomographyDataset(Dataset):
 
         if self.target_size != image.shape[1]:
             factor = int(image.shape[1] / self.target_size)
-            filter = np.ones((1, factor, factor)) / (factor ** 2)
+            filter = np.ones((1, factor, factor)) / (factor**2)
             # reshape all images and labels to target size using downscaling
             image = convolve(image, filter)[:, 0::factor, 0::factor]
             label_sampled = convolve(label, filter)[:, 0::factor, 0::factor]
