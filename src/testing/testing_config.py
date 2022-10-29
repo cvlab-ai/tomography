@@ -17,7 +17,11 @@ from datetime import datetime
 
 class TestingConfig:
     def __init__(
-        self, custom_layer: Optional[nn.Module], batch_size: int, use_batchnorm: bool
+        self,
+        custom_layer: Optional[nn.Module],
+        batch_size: int,
+        use_batchnorm: bool,
+        multiclass: bool,
     ):
         # Batch size for training
         self.batch_size: int = batch_size
@@ -26,7 +30,8 @@ class TestingConfig:
         self.input_h = 512
         self.input_w = 512
         self.channels = 1
-        self.classes = 1
+        # background, liver, tumor
+        self.classes = 3 if multiclass else 1
         # Mode layers definition
         self.net = UNet(
             n_channels=self.channels,

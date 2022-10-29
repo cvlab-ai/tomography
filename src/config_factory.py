@@ -46,6 +46,7 @@ def config_factory(
     use_batch_norm: bool = True,
     window_width: int = 0,
     window_center: int = 0,
+    multiclass: bool = False,
 ) -> Union[TrainingConfig, TestingConfig]:
     """
     Returns config based on parameters
@@ -67,7 +68,8 @@ def config_factory(
             learning_rate,
             window_learning_rate,
             use_batch_norm,
+            multiclass,
         )
     elif mode == ConfigMode.TEST:
-        return TestingConfig(layer, batch_size, use_batch_norm)
+        return TestingConfig(layer, batch_size, use_batch_norm, multiclass)
     raise ValueError("Invalid mode")

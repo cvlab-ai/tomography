@@ -24,6 +24,7 @@ class TrainingConfig:
         learning_rate: float,
         window_learning_rate: float,
         use_batch_norm: bool,
+        multiclass: bool,
     ):
         # Batch size for training
         self.batch_size: int = batch_size
@@ -43,7 +44,8 @@ class TrainingConfig:
         self.input_h = 512
         self.input_w = 512
         self.channels = 1
-        self.classes = 1
+        # background, liver, tumor
+        self.classes = 3 if multiclass else 1
         # Mode layers definition
         self.net = UNet(
             n_channels=self.channels,
@@ -89,5 +91,4 @@ class TrainingConfig:
             threshold=0.0000001,
             threshold_mode="abs",
         )
-        self.loss = nn.CrossEntropyLoss()
         self.tb: Optional[SummaryWriter] = None
