@@ -42,7 +42,12 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
     parser.add_argument("--tumor", action="store_true", help="Use tumor labels")
     parser.add_argument("--normalize", action="store_true", help="Normalize images")
-    parser.add_argument("--val_test_switch", action="store_true", help="Normalize images")
+    parser.add_argument(
+        "--val_test_switch", action="store_true", help="Normalize images"
+    )
+    parser.add_argument(
+        "--discard", action="store_true", help="Discard images with 100% background"
+    )
     return parser.parse_args()
 
 
@@ -81,6 +86,7 @@ def main():
         target_size=args.img_size,
         tumor=args.tumor,
         normalize=args.normalize,
+        discard=args.discard,
     )
 
     folds, test = dataset.train_val_test_k_fold(0.2)
@@ -91,8 +97,8 @@ def main():
     )
 
     if args.val_test_switch:
-        tmp = folds[0]['val']
-        folds[0]['val'] = test
+        tmp = folds[0]["val"]
+        folds[0]["val"] = test
         test = tmp
 
     for i, fold_data_loaders in enumerate(folds_data_loaders):

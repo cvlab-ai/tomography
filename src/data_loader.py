@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.model_selection import train_test_split
 from typing import Dict, Tuple
 from scipy.ndimage import convolve
-
+from collections import Counter
 from src.utils import norm_point
 
 
@@ -24,9 +24,17 @@ class TomographyDataset(Dataset):
         target_transform=None,
         tumor=False,
         normalize=False,
+        discard=False,
     ):
         # Store metadata, 2 and 3 column change type to string_
         self.metadata = metadata
+
+        # Remove slices with only background
+        if discard:
+            self.metadata = np.delete(
+                self.metadata, np.where(self.metadata[:, 4] == 1.0), axis=0
+            )
+
         self.metadata[:, 2] = self.metadata[:, 2].astype(np.string_)
         self.metadata[:, 3] = self.metadata[:, 3].astype(np.string_)
 
@@ -56,7 +64,7 @@ class TomographyDataset(Dataset):
 
         if self.target_size != image.shape[1]:
             factor = int(image.shape[1] / self.target_size)
-            filter = np.ones((1, factor, factor)) / (factor**2)
+            filter = np.ones((1, factor, factor)) / (factor ** 2)
             # reshape all images and labels to target size using downscaling
             image = convolve(image, filter)[:, 0::factor, 0::factor]
             label_sampled = convolve(label, filter)[:, 0::factor, 0::factor]
@@ -101,7 +109,12 @@ class TomographyDataset(Dataset):
         )
         patient_ids = patients.index.values.tolist()
         tumor_classes = patients["tumor_magnitude"].tolist()
-
+        # Count number of each tumor class
+        tumor_classes_count: Dict[int, int] = Counter(tumor_classes)
+        # if there is <5 elements in any class, then decrease k
+        for key, value in tumor_classes_count.items():
+            if value < 5:
+                tumor_classes[:] = [x - 1 if x == key else x for x in tumor_classes]
         np.random.seed(seed)
 
         # Get all patient ids, patient id has 1 index in np array
@@ -118,10 +131,10 @@ class TomographyDataset(Dataset):
 
         folds = []
         kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
-        for _, (train_idx, val_patient_idx) in enumerate(
-            kf.split(patient_ids, tumor_classes)
-        ):
-            fold_dict = {"train": list(train_idx), "val": list(val_patient_idx)}
+        for (train_idx, val_patient_idx) in kf.split(patient_ids, tumor_classes):
+            val_patients = [patient_ids[i] for i in val_patient_idx]
+            train_patients = [patient_ids[i] for i in train_idx]
+            fold_dict = {"train": list(train_patients), "val": list(val_patients)}
             folds.append(fold_dict)
 
         # print(f'train:\t{len(patients.iloc[folds[0]["train"]])}\t{patients.iloc[folds[0]["train"]]["tumor_percent"].mean()}')
