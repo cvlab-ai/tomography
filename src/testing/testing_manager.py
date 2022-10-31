@@ -71,7 +71,7 @@ def run_test(
                         torch.ones_like(outputs[0]),
                     )
                     testing_config.tb.add_image(
-                        "outputs", output_tres[0], 0, dataformats="HW"
+                        "outputs", output_tres, 0, dataformats="CHW"
                     )
                 utils.calc_metrics(
                     outputs, labels, metrics, device, testing_config.classes
