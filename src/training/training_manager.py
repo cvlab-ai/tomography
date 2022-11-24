@@ -89,12 +89,16 @@ def run_training(
                     if training_config.net.window_layer is not None:
                         training_config.tb.add_scalar(
                             "center",
-                            training_config.net.window_layer.center.item(),
+                            utils.denorm_point(
+                                training_config.net.window_layer.center.item()
+                            ),
                             global_step,
                         )
                         training_config.tb.add_scalar(
                             "width",
-                            training_config.net.window_layer.width.item(),
+                            utils.denorm_point(
+                                training_config.net.window_layer.width.item()
+                            ),
                             global_step,
                         )
                     # statistics

@@ -53,7 +53,7 @@ def calc_metrics(
     device: torch.device,
     num_of_classes: int,
 ) -> None:
-    dice_score = 0
+    dice_score = torch.Tensor([0 for _ in range(num_of_classes)]).to(device)
     dice_coeff_metric = Dice().to(device)
     for i in range(num_of_classes):
         # Ignore background
@@ -62,8 +62,13 @@ def calc_metrics(
         elif num_of_classes == 1:
             dice_score = dice_coeff_metric(pred, target)
         else:
-            dice_score += dice_coeff_metric(pred[:, i], target[:, i])
-    metrics["dice"] += (dice_score.item() / (num_of_classes - 1)) * target.size(0)  # type: ignore
+            dice_score[i] = dice_coeff_metric(pred[:, i], target[:, i])
+    if num_of_classes > 1:
+        metrics["dice_liver"] += dice_score[1].item()
+        metrics["dice_tumor"] += dice_score[2].item()
+        metrics["dice"] += dice_score[1:].mean().item()
+    else:
+        metrics["dice"] += dice_score.item()
 
 
 def print_metrics(
@@ -95,6 +100,10 @@ def save_model(net: nn.Module, name: str) -> None:
 
 def norm_point(point):
     return (point + 1024) / 2560 - 1
+
+
+def denorm_point(point):
+    return (point + 1) * 2560 - 1024
 
 
 def torch_renorm(x, width, center):
