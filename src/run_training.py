@@ -128,7 +128,9 @@ def main():
         else:
             finished = True
         finally:
-            run_test(name, test_config, device, test_dataset, existing_tensorboard=config.tb)
+            run_test(
+                name, test_config, device, test_dataset, existing_tensorboard=config.tb
+            )
             utils.close_tensorboard(config.tb)
 
 

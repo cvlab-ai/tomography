@@ -33,7 +33,9 @@ def run_test(
     date = now.strftime("%d_%m_%Y")
     timestamp = datetime.now().strftime("%H_%M_%S")
     if existing_tensorboard is None:
-        existing_tensorboard = utils.create_tensorboard(date, f"{test_name}_{timestamp}")
+        existing_tensorboard = utils.create_tensorboard(
+            date, f"{test_name}_{timestamp}"
+        )
     testing_config.tb = existing_tensorboard
     testing_config.net.load_state_dict(torch.load(weights_filename))
 

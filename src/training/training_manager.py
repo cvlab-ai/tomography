@@ -67,9 +67,9 @@ def run_training(
                 metrics: dict = defaultdict(float)
                 epoch_samples = 0
                 with tqdm(
-                        total=len(data_loaders[phase]) * training_config.batch_size,
-                        desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
-                        unit="img",
+                    total=len(data_loaders[phase]) * training_config.batch_size,
+                    desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
+                    unit="img",
                 ) as pbar:
                     for (inputs, labels) in data_loaders[phase]:
                         inputs = inputs.to(device, dtype=torch.float32)
@@ -96,12 +96,16 @@ def run_training(
                             if training_config.net.window_layer is not None:
                                 training_config.tb.add_scalar(
                                     "center",
-                                    utils.denorm_point(training_config.net.window_layer.center.item()),
+                                    utils.denorm_point(
+                                        training_config.net.window_layer.center.item()
+                                    ),
                                     global_step,
                                 )
                                 training_config.tb.add_scalar(
                                     "width",
-                                    utils.denorm_point(training_config.net.window_layer.width.item()),
+                                    utils.denorm_point(
+                                        training_config.net.window_layer.width.item()
+                                    ),
                                     global_step,
                                 )
                         # statistics
@@ -122,14 +126,18 @@ def run_training(
                         if epoch_loss < best_loss:
                             print("saving best model")
                             best_loss = epoch_loss
-                            best_model_wts = copy.deepcopy(training_config.net.state_dict())
+                            best_model_wts = copy.deepcopy(
+                                training_config.net.state_dict()
+                            )
 
-                        epoch_dice = metrics['dice'] / epoch_samples
+                        epoch_dice = metrics["dice"] / epoch_samples
                         if epoch >= 24 and epoch_dice < 50:
                             raise RerunException(f"Dice under 50 in epoch {epoch}")
                 finally:
                     time_elapsed = time.time() - since
-                    print("{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
+                    print(
+                        "{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60)
+                    )
                     gc.collect()
                     torch.cuda.empty_cache()
     finally:
