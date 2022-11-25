@@ -125,7 +125,7 @@ def run_training(
                             best_model_wts = copy.deepcopy(training_config.net.state_dict())
 
                         epoch_dice = metrics['dice'] / epoch_samples
-                        if epoch >= 1 and epoch_dice < 50:
+                        if epoch >= 24 and epoch_dice < 50:
                             raise RerunException(f"Dice under 50 in epoch {epoch}")
                 finally:
                     time_elapsed = time.time() - since
