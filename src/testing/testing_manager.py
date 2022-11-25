@@ -2,6 +2,8 @@ from torch.utils.data import DataLoader
 
 from datetime import datetime
 import torch
+from torch.utils.tensorboard import SummaryWriter
+
 import src.utils as utils
 from collections import defaultdict
 from tqdm import tqdm
@@ -15,11 +17,13 @@ def run_test(
     testing_config: TestingConfig,
     device: torch.device,
     data_loader: DataLoader,
+    existing_tensorboard: SummaryWriter = None,
 ) -> None:
     """
     Runs the training loop.
     :param device:
     :param testing_config:
+    :param existing_tensorboard:
     :param weights_filename: name of the weights file
     :param data_loader: DataLoader object
     """
@@ -28,7 +32,9 @@ def run_test(
     now = datetime.now()
     date = now.strftime("%d_%m_%Y")
     timestamp = datetime.now().strftime("%H_%M_%S")
-    testing_config.tb = utils.create_tensorboard(date, f"{test_name}_{timestamp}")
+    if existing_tensorboard is None:
+        existing_tensorboard = utils.create_tensorboard(date, f"{test_name}_{timestamp}")
+    testing_config.tb = existing_tensorboard
     testing_config.net.load_state_dict(torch.load(weights_filename))
 
     if torch.cuda.is_available():
@@ -82,4 +88,3 @@ def run_test(
                 pbar.set_postfix(**{"loss (batch)": loss_value.item()})
 
         utils.print_metrics(testing_config.tb, metrics, test_samples, "test", 0)
-        utils.close_tensorboard(testing_config.tb)
