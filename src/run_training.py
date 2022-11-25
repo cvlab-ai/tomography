@@ -2,10 +2,11 @@ import argparse
 
 import numpy as np
 
+from src import utils
 from src.data_loader import TomographyDataset
 from src.prepare_dataset import load_metadata
 from src.testing.testing_manager import run_test
-from training.training_manager import run_training
+from training.training_manager import run_training, RerunException
 import torch
 import torch.multiprocessing as mp
 from src.config_factory import config_factory, ConfigMode
@@ -65,7 +66,6 @@ def main():
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
     # U-net
-    name = args.name
     config = config_factory(
         ConfigMode.TRAIN,
         args.experiment,
@@ -78,6 +78,15 @@ def main():
         args.window_center,
         args.multiclass,
     )
+
+    test_config = config_factory(
+        ConfigMode.TEST,
+        args.experiment,
+        args.batch_size,
+        use_batch_norm=args.use_batch_norm,
+        multiclass=args.multiclass,
+    )
+
     print(f"Running {args.experiment}")
 
     metadata = load_metadata(args.metadata)
@@ -97,32 +106,32 @@ def main():
     folds, test = dataset.train_val_test_k_fold(0.2)
     print(folds)
 
-    folds_data_loaders = dataset.create_k_fold_data_loaders(
-        folds, batch_size=config.batch_size
-    )
+    folds_data_loaders = dataset.create_k_fold_data_loaders(folds, config.batch_size)
+    test_dataset = dataset.create_data_loader(test, config.batch_size)
 
     if args.val_test_switch:
         tmp = folds[0]["val"]
         folds[0]["val"] = test
         test = tmp
 
-    for i, fold_data_loaders in enumerate(folds_data_loaders):
-        if i == args.fold:
-            run_training(
-                name,
-                config,
-                device,
-                fold_data_loaders,
+    finished = False
+    rerun = 0
+
+    while not finished:
+        name = args.name if rerun == 0 else f"{args.name}_rerun-{rerun}"
+        try:
+            run_training(name, config, device, folds_data_loaders[args.fold])
+        except RerunException as e:
+            rerun += 1
+            print(e)
+            print("Rerunning after test")
+        else:
+            finished = True
+        finally:
+            run_test(
+                name, test_config, device, test_dataset, existing_tensorboard=config.tb
             )
-    test_config = config_factory(
-        ConfigMode.TEST,
-        args.experiment,
-        args.batch_size,
-        use_batch_norm=args.use_batch_norm,
-        multiclass=args.multiclass,
-    )
-    test_dataset = dataset.create_data_loader(test, config.batch_size)
-    run_test(name, test_config, device, test_dataset)
+            utils.close_tensorboard(config.tb)
 
 
 if __name__ == "__main__":

@@ -165,7 +165,7 @@ class TomographyDataset(Dataset):
             folds_data_loaders.append(data_loaders_dict)
         return folds_data_loaders
 
-    def create_data_loader(self, patient_ids, batch_size, shuffle=True, seed=42):
+    def create_data_loader(self, patient_ids, batch_size, shuffle=True, seed=None):
         slice_ids = self.patients_to_slice_ids(patient_ids)
 
         if shuffle:
@@ -194,10 +194,11 @@ class SeededSubsetRandomSampler(Sampler):
         indices (sequence): a sequence of indices
     """
 
-    def __init__(self, indices, seed):
+    def __init__(self, indices, seed=None):
         self.indices = indices
         self.g = torch.Generator()
-        self.g.manual_seed(seed)
+        if seed is not None:
+            self.g.manual_seed(seed)
 
     def __iter__(self):
         return (
