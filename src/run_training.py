@@ -65,28 +65,6 @@ def main():
 
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
 
-    # U-net
-    config = config_factory(
-        ConfigMode.TRAIN,
-        args.experiment,
-        args.batch_size,
-        args.epochs,
-        args.learning_rate,
-        args.window_learning_rate,
-        args.use_batch_norm,
-        args.window_width,
-        args.window_center,
-        args.multiclass,
-    )
-
-    test_config = config_factory(
-        ConfigMode.TEST,
-        args.experiment,
-        args.batch_size,
-        use_batch_norm=args.use_batch_norm,
-        multiclass=args.multiclass,
-    )
-
     print(f"Running {args.experiment}")
 
     metadata = load_metadata(args.metadata)
@@ -106,8 +84,8 @@ def main():
     folds, test = dataset.train_val_test_k_fold(0.2)
     print(folds)
 
-    folds_data_loaders = dataset.create_k_fold_data_loaders(folds, config.batch_size)
-    test_dataset = dataset.create_data_loader(test, config.batch_size)
+    folds_data_loaders = dataset.create_k_fold_data_loaders(folds, args.batch_size)
+    test_dataset = dataset.create_data_loader(test, args.batch_size)
 
     if args.val_test_switch:
         tmp = folds[0]["val"]
@@ -120,6 +98,19 @@ def main():
     while not finished:
         name = args.name if rerun == 0 else f"{args.name}_rerun-{rerun}"
         try:
+            config = config_factory(
+                ConfigMode.TRAIN,
+                args.experiment,
+                args.batch_size,
+                args.epochs,
+                args.learning_rate,
+                args.window_learning_rate,
+                args.use_batch_norm,
+                args.window_width,
+                args.window_center,
+                args.multiclass,
+            )
+
             run_training(name, config, device, folds_data_loaders[args.fold])
         except RerunException as e:
             rerun += 1
@@ -128,6 +119,13 @@ def main():
         else:
             finished = True
         finally:
+            test_config = config_factory(
+                ConfigMode.TEST,
+                args.experiment,
+                args.batch_size,
+                use_batch_norm=args.use_batch_norm,
+                multiclass=args.multiclass,
+            )
             run_test(
                 name, test_config, device, test_dataset, existing_tensorboard=config.tb
             )
