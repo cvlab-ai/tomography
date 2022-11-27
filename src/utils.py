@@ -53,21 +53,17 @@ def calc_metrics(
     device: torch.device,
     num_of_classes: int,
 ) -> None:
-    dice_score = torch.Tensor([0 for _ in range(num_of_classes)]).to(device)
     dice_coeff_metric = Dice().to(device)
-    for i in range(num_of_classes):
-        # Ignore background
-        if num_of_classes > 1 and i == 0:
-            continue
-        elif num_of_classes == 1:
-            dice_score = dice_coeff_metric(pred, target)
-        else:
-            dice_score[i] = dice_coeff_metric(pred[:, i], target[:, i])
-    if num_of_classes > 1:
-        metrics["dice_liver"] += dice_score[1].item()
-        metrics["dice_tumor"] += dice_score[2].item()
-        metrics["dice"] += dice_score[1:].mean().item()
+    if num_of_classes == 1:
+        dice_score = dice_coeff_metric(pred, target)
+        metrics["dice"] += dice_score.item()
     else:
+        dice_liver = dice_coeff_metric(pred[:, 1], target[:, 1])
+        dice_tumor = dice_coeff_metric(pred[:, 2], target[:, 2])
+        dice_score = (dice_liver + dice_tumor) / 2
+
+        metrics["dice_liver"] += dice_liver.item()
+        metrics["dice_tumor"] += dice_tumor.item()
         metrics["dice"] += dice_score.item()
 
 
