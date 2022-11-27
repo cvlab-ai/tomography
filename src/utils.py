@@ -56,15 +56,15 @@ def calc_metrics(
     dice_coeff_metric = Dice().to(device)
     if num_of_classes == 1:
         dice_score = dice_coeff_metric(pred, target)
-        metrics["dice"] += dice_score.item()
+        metrics["dice"] += dice_score.item() * target.size(0)
     else:
         dice_liver = dice_coeff_metric(pred[:, 1], target[:, 1])
         dice_tumor = dice_coeff_metric(pred[:, 2], target[:, 2])
         dice_score = (dice_liver + dice_tumor) / 2
 
-        metrics["dice_liver"] += dice_liver.item()
-        metrics["dice_tumor"] += dice_tumor.item()
-        metrics["dice"] += dice_score.item()
+        metrics["dice_liver"] += dice_liver.item() * target.size(0)
+        metrics["dice_tumor"] += dice_tumor.item() * target.size(0)
+        metrics["dice"] += dice_score.item() * target.size(0)
 
 
 def print_metrics(
