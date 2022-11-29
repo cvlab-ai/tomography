@@ -130,7 +130,7 @@ def run_training(
                                 training_config.net.state_dict()
                             )
 
-                        epoch_dice = metrics["dice"] / epoch_samples
+                        epoch_dice = metrics["dice"]
                         if epoch >= 24 and epoch_dice < 50:
                             raise RerunException(f"Dice under 50 in epoch {epoch}")
                 finally:
