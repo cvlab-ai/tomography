@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from torch import optim
@@ -19,10 +20,11 @@ class RerunException(Exception):
 
 
 def run_training(
-        training_name: str,
-        training_config: TrainingConfig,
-        device: torch.device,
-        data_loaders: dict,
+    training_name: str,
+    training_config: TrainingConfig,
+    device: torch.device,
+    data_loaders: dict,
+    log_dir: str,
 ) -> None:
     """
     Runs the training loop.
@@ -30,12 +32,10 @@ def run_training(
     :param training_config:
     :param training_name: name of the training
     :param data_loaders: dictionary of dataloaders
+    :param log_dir: log directory
     """
     print(f"Training {training_name} on device: {device}")
-    now = datetime.now()
-    date = now.strftime("%d_%m_%Y")
-    timestamp = datetime.now().strftime("%H_%M_%S")
-    training_config.tb = utils.create_tensorboard(date, f"{training_name}_{timestamp}")
+    training_config.tb = utils.create_tensorboard(log_dir, training_name)
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
     best_dice = 1e10
@@ -67,9 +67,9 @@ def run_training(
                 metrics: dict = defaultdict(float)
                 epoch_samples = 0
                 with tqdm(
-                        total=len(data_loaders[phase]) * training_config.batch_size,
-                        desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
-                        unit="img",
+                    total=len(data_loaders[phase]) * training_config.batch_size,
+                    desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
+                    unit="img",
                 ) as pbar:
                     for (inputs, labels) in data_loaders[phase]:
                         inputs = inputs.to(device, dtype=torch.float32)
@@ -93,7 +93,6 @@ def run_training(
                             loss_value.backward()
                             training_config.optimizer.step()
 
-
                         # statistics
                         epoch_samples += inputs.size(0)
                         pbar.update(inputs.size(0))
@@ -101,21 +100,19 @@ def run_training(
                         pbar.set_postfix(**{"loss (batch)": loss_value.item()})
 
                 if training_config.net.window_layer is not None:
-                    for i, center in enumerate(training_config.net.window_layer.centers):
+                    for i, center in enumerate(
+                        training_config.net.window_layer.centers
+                    ):
                         training_config.tb.add_scalar(
                             f"window-{i}-center",
-                            utils.denorm_point(
-                                center.item()
-                            ),
+                            utils.denorm_point(center.item()),
                             epoch,
                         )
 
                     for i, width in enumerate(training_config.net.window_layer.widths):
                         training_config.tb.add_scalar(
                             f"window-{i}-width",
-                            utils.denorm_point(
-                                width.item()
-                            ),
+                            utils.denorm_point(width.item()),
                             epoch,
                         )
 
@@ -131,23 +128,19 @@ def run_training(
                     if epoch_dice < best_dice:
                         print("Saving model with best VAL DICE")
                         best_dice = epoch_dice
-                        best_model_wts = copy.deepcopy(
-                            training_config.net.state_dict()
-                        )
+                        best_model_wts = copy.deepcopy(training_config.net.state_dict())
 
                 time_elapsed = time.time() - since
-                print(
-                    "{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60)
-                )
+                print("{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
                 gc.collect()
                 torch.cuda.empty_cache()
 
-                if phase == "val" and epoch >= 24 and epoch_dice < 0.5:
-                    raise RerunException(f"Dice under 50 in epoch {epoch}")
+                if phase == "val" and epoch >= 20 and epoch_dice < 0.5:
+                    raise RerunException(f"Dice under 50 in epoch {epoch}, rerunning")
 
     finally:
         print(f"Best val dice: {best_dice:4f}")
         # load best model weights
         training_config.net.load_state_dict(best_model_wts)
         # save model
-        utils.save_model(training_config.net, training_name)
+        utils.save_model(training_config.net, os.path.join(log_dir, training_name, training_name))

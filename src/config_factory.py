@@ -20,7 +20,10 @@ class ConfigMode(Enum):
 
 
 def get_layer(
-    special_layer: str, n_channels: int, window_width: List[int], window_center: List[int]
+    special_layer: str,
+    n_channels: int,
+    window_width: List[float],
+    window_center: List[float],
 ) -> Union[nn.Module, None]:
     """
     Returns layer based on special_layer string
@@ -32,7 +35,9 @@ def get_layer(
     """
     if special_layer == "adaptive_sigmoid":
         # return WindowLayerAdaptiveSigmoid(window_center, window_width)
-        raise NotImplementedError("Adaptive sigmoid not implemented for multiple channels")
+        raise NotImplementedError(
+            "Adaptive sigmoid not implemented for multiple channels"
+        )
     elif special_layer == "adaptive_tanh":
         return WindowLayerAdaptiveTanh(n_channels, window_center, window_width)
     elif special_layer == "hard_tanh":
@@ -46,8 +51,8 @@ def config_factory(
     special_layer: str,
     batch_size: int,
     n_windows: int,
-    window_widths: List[int],
-    window_centers: List[int],
+    window_widths: List[float],
+    window_centers: List[float],
     epochs: int = 50,
     learning_rate: float = 0.0001,
     window_learning_rate: float = 0.0001,
@@ -78,5 +83,11 @@ def config_factory(
             multiclass=multiclass,
         )
     elif mode == ConfigMode.TEST:
-        return TestingConfig(layer, batch_size, use_batch_norm, multiclass)
+        return TestingConfig(
+            custom_layer=layer,
+            n_channels=n_windows,
+            batch_size=batch_size,
+            use_batchnorm=use_batch_norm,
+            multiclass=multiclass,
+        )
     raise ValueError("Invalid mode")

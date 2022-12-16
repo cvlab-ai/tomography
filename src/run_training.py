@@ -1,7 +1,9 @@
 import argparse
+import os
+from datetime import datetime
+from typing import IO
 
-import numpy as np
-
+import sys
 from src import utils
 from src.data_loader import TomographyDataset
 from src.prepare_dataset import load_metadata
@@ -10,7 +12,20 @@ from training.training_manager import run_training, RerunException
 import torch
 import torch.multiprocessing as mp
 from src.config_factory import config_factory, ConfigMode
-import torchmetrics
+
+
+class FileConsoleOut(object):
+    def __init__(self, *files):
+        self.files = files
+
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
 
 
 def training_arg_parser() -> argparse.Namespace:
@@ -21,13 +36,30 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, help="Number of epochs", required=True)
     parser.add_argument("--gpu", type=int, help="GPU no", required=True)
     parser.add_argument("--fold", type=int, help="Fold number", required=True)
-    parser.add_argument("--learning_rate", type=float, help="network learning rate", required=True)
     parser.add_argument(
-        "--window_learning_rate", type=float, help="learning rate of window layer", required=True
+        "--learning_rate", type=float, help="network learning rate", required=True
     )
-    parser.add_argument("--n_windows", type=int, help="number of windows", required=True)
-    parser.add_argument("--window_widths", type=str, help="space delimited widths of window layers", required=True)
-    parser.add_argument("--window_centers", type=str, help="space delimited centers of window layers", required=True)
+    parser.add_argument(
+        "--window_learning_rate",
+        type=float,
+        help="learning rate of window layer",
+        required=True,
+    )
+    parser.add_argument(
+        "--n_windows", type=int, help="number of windows", required=True
+    )
+    parser.add_argument(
+        "--window_widths",
+        type=str,
+        help="space delimited widths of window layers",
+        required=True,
+    )
+    parser.add_argument(
+        "--window_centers",
+        type=str,
+        help="space delimited centers of window layers",
+        required=True,
+    )
     parser.add_argument(
         "--img_size",
         type=int,
@@ -57,13 +89,25 @@ def training_arg_parser() -> argparse.Namespace:
     parser.add_argument("--multiclass", action="store_true", help="Use multiclass")
 
     args = parser.parse_args()
-    vars(args)["window_widths"] = [int(x) for x in args.window_widths.split()]
-    vars(args)["window_centers"] = [int(x) for x in args.window_centers.split()]
+    vars(args)["window_widths"] = [float(x) for x in args.window_widths.split()]
+    vars(args)["window_centers"] = [float(x) for x in args.window_centers.split()]
 
     return args
 
 
 def main():
+    root_path = os.path.abspath(f"{os.path.dirname(os.path.abspath(__file__))}/../")
+    now = datetime.now()
+    timestamp = now.strftime("%d_%m_%Y__%H_%M_%S")
+    log_dir = os.path.join(root_path, "runs", timestamp)
+    if os.path.exists(log_dir):
+        print("Log dir already exists")
+        exit()
+    os.makedirs(log_dir)
+    log_file: IO = open(f"{log_dir}/log.log", "w")
+    original_out = sys.stdout
+    sys.stdout = FileConsoleOut(original_out, log_file)
+
     mp.set_start_method("spawn", force=True)
     args = training_arg_parser()
 
@@ -79,6 +123,10 @@ def main():
     metadata = load_metadata(args.metadata)
 
     metadata.drop("series_id", axis=1, inplace=True)
+
+    # limit metadata to random 3000 images
+    metadata = metadata.sample(5000)
+
     metadata = metadata.to_numpy()
     dataset = TomographyDataset(
         args.dataset,
@@ -121,12 +169,19 @@ def main():
                 multiclass=args.multiclass,
             )
 
-            run_training(name, config, device, folds_data_loaders[args.fold])
+            run_training(
+                training_name=name,
+                log_dir=log_dir,
+                training_config=config,
+                device=device,
+                data_loaders=folds_data_loaders[args.fold],
+            )
         except RerunException as e:
             rerun += 1
             print(e)
             print("Rerunning after test")
         except Exception as e:
+            print(e)
             raise e
         else:
             finished = True
@@ -141,11 +196,18 @@ def main():
                 multiclass=args.multiclass,
             )
             run_test(
-                name, test_config, device, test_dataset, existing_tensorboard=config.tb
+                weights_filename=name,
+                log_dir=log_dir,
+                testing_config=test_config,
+                device=device,
+                data_loader=test_dataset,
+                existing_tensorboard=config.tb,
             )
         finally:
-            if config is not None:
+            if config is not None and config.tb is not None:
                 utils.close_tensorboard(config.tb)
+            sys.stdout = original_out
+            log_file.close()
 
 
 if __name__ == "__main__":

@@ -20,7 +20,12 @@ class WindowLayerAdaptiveTanh(nn.Module):
         - width - trainable parameter
     """
 
-    def __init__(self, n_windows: int = 1, centers: List[float] = None, widths: List[float] = None):
+    def __init__(
+        self,
+        n_windows: int = 1,
+        centers: List[float] = None,
+        widths: List[float] = None,
+    ):
         """
         Initialization.
         INPUT:
@@ -48,6 +53,11 @@ class WindowLayerAdaptiveTanh(nn.Module):
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        n = tuple(torch.tanh(torch_renorm(x, width, center)) for width, center in torch.stack((self.widths, self.centers), dim=0, out=None))
+        n = tuple(
+            torch.tanh(torch_renorm(x, width, center))
+            for width, center in torch.stack(
+                (self.widths, self.centers), dim=0, out=None
+            )
+        )
         x = torch.concat(n, dim=1)
         return x
