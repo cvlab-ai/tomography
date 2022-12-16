@@ -19,6 +19,7 @@ class TrainingConfig:
     def __init__(
         self,
         custom_layer: Optional[nn.Module],
+        n_channels: int,
         batch_size: int,
         epochs: int,
         learning_rate: float,
@@ -43,7 +44,7 @@ class TrainingConfig:
         # Input shape
         self.input_h = 512
         self.input_w = 512
-        self.channels = 1
+        self.channels = n_channels
         # background, liver, tumor
         self.classes = 3 if multiclass else 1
         # Mode layers definition

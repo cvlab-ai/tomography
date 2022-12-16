@@ -19,10 +19,10 @@ class RerunException(Exception):
 
 
 def run_training(
-    training_name: str,
-    training_config: TrainingConfig,
-    device: torch.device,
-    data_loaders: dict,
+        training_name: str,
+        training_config: TrainingConfig,
+        device: torch.device,
+        data_loaders: dict,
 ) -> None:
     """
     Runs the training loop.
@@ -38,7 +38,7 @@ def run_training(
     training_config.tb = utils.create_tensorboard(date, f"{training_name}_{timestamp}")
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
-    best_loss = 1e10
+    best_dice = 1e10
     global_step = 0
 
     if torch.cuda.is_available():
@@ -67,9 +67,9 @@ def run_training(
                 metrics: dict = defaultdict(float)
                 epoch_samples = 0
                 with tqdm(
-                    total=len(data_loaders[phase]) * training_config.batch_size,
-                    desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
-                    unit="img",
+                        total=len(data_loaders[phase]) * training_config.batch_size,
+                        desc=f"{phase} Epoch {epoch}/{training_config.epochs}",
+                        unit="img",
                 ) as pbar:
                     for (inputs, labels) in data_loaders[phase]:
                         inputs = inputs.to(device, dtype=torch.float32)
@@ -93,55 +93,60 @@ def run_training(
                             loss_value.backward()
                             training_config.optimizer.step()
 
-                            if training_config.net.window_layer is not None:
-                                training_config.tb.add_scalar(
-                                    "center",
-                                    utils.denorm_point(
-                                        training_config.net.window_layer.center.item()
-                                    ),
-                                    global_step,
-                                )
-                                training_config.tb.add_scalar(
-                                    "width",
-                                    utils.denorm_point(
-                                        training_config.net.window_layer.width.item()
-                                    ),
-                                    global_step,
-                                )
+
                         # statistics
                         epoch_samples += inputs.size(0)
                         pbar.update(inputs.size(0))
                         global_step += 1
                         pbar.set_postfix(**{"loss (batch)": loss_value.item()})
 
+                if training_config.net.window_layer is not None:
+                    for i, center in enumerate(training_config.net.window_layer.centers):
+                        training_config.tb.add_scalar(
+                            f"window-{i}-center",
+                            utils.denorm_point(
+                                center.item()
+                            ),
+                            epoch,
+                        )
+
+                    for i, width in enumerate(training_config.net.window_layer.widths):
+                        training_config.tb.add_scalar(
+                            f"window-{i}-width",
+                            utils.denorm_point(
+                                width.item()
+                            ),
+                            epoch,
+                        )
+
                 utils.print_metrics(
                     training_config.tb, metrics, epoch_samples, phase, epoch
                 )
                 epoch_loss = metrics["loss"] / epoch_samples
+                epoch_dice = metrics["dice"] / epoch_samples
 
-                try:
-                    if phase == "val":
-                        training_config.scheduler.step(epoch_loss)
+                if phase == "val":
+                    training_config.scheduler.step(epoch_loss)
 
-                        if epoch_loss < best_loss:
-                            print("saving best model")
-                            best_loss = epoch_loss
-                            best_model_wts = copy.deepcopy(
-                                training_config.net.state_dict()
-                            )
+                    if epoch_dice < best_dice:
+                        print("Saving model with best VAL DICE")
+                        best_dice = epoch_dice
+                        best_model_wts = copy.deepcopy(
+                            training_config.net.state_dict()
+                        )
 
-                        epoch_dice = metrics["dice"] / epoch_samples
-                        if epoch >= 24 and epoch_dice < 0.5:
-                            raise RerunException(f"Dice under 50 in epoch {epoch}")
-                finally:
-                    time_elapsed = time.time() - since
-                    print(
-                        "{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60)
-                    )
-                    gc.collect()
-                    torch.cuda.empty_cache()
+                time_elapsed = time.time() - since
+                print(
+                    "{:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60)
+                )
+                gc.collect()
+                torch.cuda.empty_cache()
+
+                if phase == "val" and epoch >= 24 and epoch_dice < 0.5:
+                    raise RerunException(f"Dice under 50 in epoch {epoch}")
+
     finally:
-        print(f"Best val loss: {best_loss:4f}")
+        print(f"Best val dice: {best_dice:4f}")
         # load best model weights
         training_config.net.load_state_dict(best_model_wts)
         # save model

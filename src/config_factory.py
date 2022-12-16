@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union
+from typing import Union, List
 
 import torch.nn as nn
 
@@ -20,19 +20,24 @@ class ConfigMode(Enum):
 
 
 def get_layer(
-    special_layer: str, window_width: int, window_center: int
+    special_layer: str, n_channels: int, window_width: List[int], window_center: List[int]
 ) -> Union[nn.Module, None]:
     """
     Returns layer based on special_layer string
     :param special_layer: name of the layer
+    :param n_channels: number of channels
+    :param window_width: list of window widths
+    :param window_center: list of window centers
     :return: layer object
     """
     if special_layer == "adaptive_sigmoid":
-        return WindowLayerAdaptiveSigmoid(window_center, window_width)
+        # return WindowLayerAdaptiveSigmoid(window_center, window_width)
+        raise NotImplementedError("Adaptive sigmoid not implemented for multiple channels")
     elif special_layer == "adaptive_tanh":
-        return WindowLayerAdaptiveTanh(window_center, window_width)
+        return WindowLayerAdaptiveTanh(n_channels, window_center, window_width)
     elif special_layer == "hard_tanh":
-        return WindowLayerHardTanH(window_center, window_width)
+        # return WindowLayerHardTanH(window_center, window_width)
+        raise NotImplementedError("Hard tanh not implemented for multiple channels")
     return None
 
 
@@ -40,12 +45,13 @@ def config_factory(
     mode: ConfigMode,
     special_layer: str,
     batch_size: int,
+    n_windows: int,
+    window_widths: List[int],
+    window_centers: List[int],
     epochs: int = 50,
     learning_rate: float = 0.0001,
     window_learning_rate: float = 0.0001,
     use_batch_norm: bool = True,
-    window_width: int = 0,
-    window_center: int = 0,
     multiclass: bool = False,
 ) -> Union[TrainingConfig, TestingConfig]:
     """
@@ -59,16 +65,17 @@ def config_factory(
     :param use_batch_norm: use batch norm
     :return:
     """
-    layer = get_layer(special_layer, window_width, window_center)
+    layer = get_layer(special_layer, n_windows, window_widths, window_centers)
     if mode == ConfigMode.TRAIN:
         return TrainingConfig(
-            layer,
-            batch_size,
-            epochs,
-            learning_rate,
-            window_learning_rate,
-            use_batch_norm,
-            multiclass,
+            custom_layer=layer,
+            n_channels=n_windows,
+            batch_size=batch_size,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            window_learning_rate=window_learning_rate,
+            use_batch_norm=use_batch_norm,
+            multiclass=multiclass,
         )
     elif mode == ConfigMode.TEST:
         return TestingConfig(layer, batch_size, use_batch_norm, multiclass)
