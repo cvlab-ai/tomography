@@ -124,9 +124,6 @@ def main():
 
     metadata.drop("series_id", axis=1, inplace=True)
 
-    # limit metadata to random 3000 images
-    metadata = metadata.sample(5000)
-
     metadata = metadata.to_numpy()
     dataset = TomographyDataset(
         args.dataset,
