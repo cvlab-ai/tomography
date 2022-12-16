@@ -143,4 +143,6 @@ def run_training(
         # load best model weights
         training_config.net.load_state_dict(best_model_wts)
         # save model
-        utils.save_model(training_config.net, os.path.join(log_dir, training_name, training_name))
+        utils.save_model(
+            training_config.net, os.path.join(log_dir, training_name, training_name)
+        )
