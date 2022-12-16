@@ -106,7 +106,7 @@ def main():
     root_path = os.path.abspath(f"{os.path.dirname(os.path.abspath(__file__))}/../")
     now = datetime.now()
     timestamp = now.strftime("%d_%m_%Y__%H_%M_%S")
-    log_dir = os.path.join(root_path, "runs", timestamp)
+    log_dir = os.path.join(root_path, "runs", f"{timestamp}_pid-{os.getpid()}")
     if os.path.exists(log_dir):
         print("Log dir already exists")
         exit()
