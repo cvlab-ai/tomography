@@ -17,6 +17,7 @@ def run_test(
     testing_config: TestingConfig,
     device: torch.device,
     data_loader: DataLoader,
+    log_dir: str,
     existing_tensorboard: SummaryWriter = None,
 ) -> None:
     """
@@ -24,18 +25,14 @@ def run_test(
     :param device:
     :param testing_config:
     :param existing_tensorboard:
+    :param log_dir: log dir
     :param weights_filename: name of the weights file
     :param data_loader: DataLoader object
     """
     test_name = weights_filename + "_test"
     print(f"Testing {weights_filename} on device: {device}")
-    now = datetime.now()
-    date = now.strftime("%d_%m_%Y")
-    timestamp = datetime.now().strftime("%H_%M_%S")
     if existing_tensorboard is None:
-        existing_tensorboard = utils.create_tensorboard(
-            date, f"{test_name}_{timestamp}"
-        )
+        existing_tensorboard = utils.create_tensorboard(log_dir, test_name)
     testing_config.tb = existing_tensorboard
     testing_config.net.load_state_dict(torch.load(weights_filename))
 
