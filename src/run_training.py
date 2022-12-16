@@ -75,7 +75,7 @@ def training_arg_parser() -> argparse.Namespace:
         choices=["normal_unet", "hard_tanh", "adaptive_sigmoid", "adaptive_tanh"],
         required=True,
     )
-    parser.add_argument("--name", type=str, help="name of training", required=True)
+    parser.add_argument("--name", type=str, help="name of training")
 
     parser.add_argument("--use_batch_norm", action="store_true", help="Use batch norm")
     parser.add_argument("--tumor", action="store_true", help="Use tumor labels")
@@ -91,6 +91,13 @@ def training_arg_parser() -> argparse.Namespace:
     args = parser.parse_args()
     vars(args)["window_widths"] = [float(x) for x in args.window_widths.split()]
     vars(args)["window_centers"] = [float(x) for x in args.window_centers.split()]
+
+    if args.n_windows != len(args.window_widths) or args.n_windows != len(
+        args.window_centers
+    ):
+        raise ValueError(
+            "Number of windows should be equal to number of window widths and centers"
+        )
 
     return args
 
@@ -149,8 +156,28 @@ def main():
     finished = False
     rerun = 0
     config = None
+    name_params = [
+        f"size-{args.img_size}",
+        f'{"multi-window" if args.n_windows > 1 else "single-window"}',
+        f'{"multiclass" if args.multiclass else ""}',
+        f'{"tumor" if args.tumor else ""}',
+        f'{"normalize" if args.normalize else ""}',
+        f'{"discard" if args.discard else ""}',
+        f'{"val_test_switch" if args.val_test_switch else ""}',
+        f"fold-{args.fold}",
+        f"lr-{args.learning_rate}",
+        f"wlr-{args.window_learning_rate}",
+        f"nw-{args.n_windows}",
+        f"ww-{list(map(int, args.window_widths))}",
+        f"wl-{list(map(int, args.window_centers))}",
+    ]
+    name_params = filter(None, name_params)
+    base_name = "_".join(name_params)
+    if args.name:
+        base_name = f"{args.name}_{base_name}"
+
     while not finished:
-        name = args.name if rerun == 0 else f"{args.name}_rerun-{rerun}"
+        name = base_name if rerun == 0 else f"{base_name}_rerun-{rerun}"
         try:
             config = config_factory(
                 mode=ConfigMode.TRAIN,
