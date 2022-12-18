@@ -125,7 +125,7 @@ def run_training(
                 if phase == "val":
                     training_config.scheduler.step(epoch_loss)
 
-                    if epoch_dice < best_dice:
+                    if epoch_dice > best_dice:
                         print("Saving model with best VAL DICE")
                         best_dice = epoch_dice
                         best_model_wts = copy.deepcopy(training_config.net.state_dict())
