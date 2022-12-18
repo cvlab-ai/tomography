@@ -54,6 +54,11 @@ class WindowLayerAdaptiveTanh(nn.Module):
         Applies the function to the input elementwise.
         """
         # Apply tanh to the input
-        x = tuple(torch.tanh(torch_renorm(x, width, center)) for width, center in torch.stack((self.widths, self.centers), dim=1, out=None))
+        x = tuple(
+            torch.tanh(torch_renorm(x, width, center))
+            for width, center in torch.stack(
+                (self.widths, self.centers), dim=1, out=None
+            )
+        )
         x = torch.concat(x, dim=1)
         return x
