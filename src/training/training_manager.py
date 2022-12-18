@@ -38,7 +38,7 @@ def run_training(
     training_config.tb = utils.create_tensorboard(log_dir, training_name)
     training_config.net.train()
     best_model_wts = copy.deepcopy(training_config.net.state_dict())
-    best_dice = 1e10
+    best_dice = 0
     global_step = 0
 
     if torch.cuda.is_available():

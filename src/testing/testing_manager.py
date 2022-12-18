@@ -1,3 +1,5 @@
+import os
+
 from torch.utils.data import DataLoader
 
 from datetime import datetime
@@ -34,7 +36,7 @@ def run_test(
     if existing_tensorboard is None:
         existing_tensorboard = utils.create_tensorboard(log_dir, test_name)
     testing_config.tb = existing_tensorboard
-    testing_config.net.load_state_dict(torch.load(weights_filename))
+    testing_config.net.load_state_dict(torch.load(os.path.join(log_dir, weights_filename, weights_filename)))
 
     if torch.cuda.is_available():
         testing_config.net.cuda(device)
