@@ -231,8 +231,8 @@ def main():
             if config is not None and config.tb is not None:
                 utils.close_tensorboard(config.tb)
 
-        sys.stdout = original_out
-        log_file.close()
+    sys.stdout = original_out
+    log_file.close()
 
 
 if __name__ == "__main__":
