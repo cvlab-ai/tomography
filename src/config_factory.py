@@ -71,10 +71,11 @@ def config_factory(
     :return:
     """
     layer = get_layer(special_layer, n_windows, window_widths, window_centers)
+    n_channels = 1 if layer is None else n_windows
     if mode == ConfigMode.TRAIN:
         return TrainingConfig(
             custom_layer=layer,
-            n_channels=n_windows,
+            n_channels=n_channels,
             batch_size=batch_size,
             epochs=epochs,
             learning_rate=learning_rate,
@@ -85,7 +86,7 @@ def config_factory(
     elif mode == ConfigMode.TEST:
         return TestingConfig(
             custom_layer=layer,
-            n_channels=n_windows,
+            n_channels=n_channels,
             batch_size=batch_size,
             use_batchnorm=use_batch_norm,
             multiclass=multiclass,
