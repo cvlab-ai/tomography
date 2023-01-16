@@ -41,8 +41,7 @@ def get_layer(
     elif special_layer == "adaptive_tanh":
         return WindowLayerAdaptiveTanh(n_channels, window_center, window_width)
     elif special_layer == "hard_tanh":
-        # return WindowLayerHardTanH(window_center, window_width)
-        raise NotImplementedError("Hard tanh not implemented for multiple channels")
+        return WindowLayerHardTanH(n_channels, window_center, window_width)
     return None
 
 

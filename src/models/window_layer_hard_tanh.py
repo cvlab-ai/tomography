@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,7 +21,12 @@ class WindowLayerHardTanH(nn.Module):
         - width - trainable parameter
     """
 
-    def __init__(self, center=150.0, width=2000.0):
+    def __init__(
+        self,
+        n_windows: int = 1,
+        centers: List[float] = None,
+        widths: List[float] = None,
+    ):
         """
         Initialization.
         INPUT:
@@ -28,19 +35,32 @@ class WindowLayerHardTanH(nn.Module):
         """
         super().__init__()
 
-        center = norm_point(center)
-        width = norm_point(width)
-        # initialize center and width with the given values
-        self.center = Parameter(torch.Tensor([center]), requires_grad=True)
-        self.width = Parameter(torch.Tensor([width]), requires_grad=True)
+        if centers is None:
+            centers = [150.0] * n_windows
+
+        if widths is None:
+            widths = [2000.0] * n_windows
+
+        # Apply norm point to each center and width
+        centers = [norm_point(center) for center in centers]
+        widths = [norm_point(width) for width in widths]
+
+        # Initialize centers and widths tensors
+        self.centers = Parameter(torch.Tensor(centers), requires_grad=True)
+        self.widths = Parameter(torch.Tensor(widths), requires_grad=True)
+
 
     def forward(self, x):
         """
         Forward pass of the function.
         Applies the function to the input elementwise.
         """
-        return torch.clamp_(
-            torch_renorm(x, self.width, self.center),
-            -1,
-            1,
+        # Apply tanh to the input
+        x = tuple(
+            torch.clamp_(torch_renorm(x, width, center), -1, 1)
+            for width, center in torch.stack(
+                (self.widths, self.centers), dim=1, out=None
+            )
         )
+        x = torch.concat(x, dim=1)
+        return x
